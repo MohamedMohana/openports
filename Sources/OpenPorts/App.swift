@@ -49,7 +49,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Connect the view model with the status item controller
         // IMPORTANT: This must happen BEFORE starting the refresh cycle
         menuViewModel.statusItemController = statusItemController
-        
+
+        // Show initial loading state immediately
+        menuViewModel.updateMenuWithLoadingState()
+
         // Now trigger the first refresh - this will properly update the menu
         menuViewModel.refreshPorts()
         
