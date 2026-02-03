@@ -77,6 +77,7 @@ class MenuViewModel: ObservableObject {
     }
     
     func refreshPorts() {
+        AppLogger.shared.log("refreshPorts() called from: \(Thread.callStackSymbols[1])")
         guard !isLoading else {
             AppLogger.shared.log("Already loading, skipping refresh")
             return
@@ -130,6 +131,7 @@ class MenuViewModel: ObservableObject {
     }
     
     private func startTimer() {
+        AppLogger.shared.log("startTimer() called, current timer: \(refreshTimer != nil)")
         invalidateTimer()
         
         guard refreshInterval > 0 else {
@@ -142,6 +144,7 @@ class MenuViewModel: ObservableObject {
             withTimeInterval: refreshInterval,
             repeats: true
         ) { [weak self] _ in
+            AppLogger.shared.log("Timer fired, calling refreshPorts()")
             Task { @MainActor in
                 self?.refreshPorts()
             }
