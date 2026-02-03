@@ -32,8 +32,7 @@ OpenPorts is a lightweight macOS menu bar application that displays which local 
 ### Homebrew (Recommended)
 
 ```bash
-brew tap MohamedMohana/tap
-brew install MohamedMohana/tap/openports
+brew install --cask MohamedMohana/tap/openports
 open -a OpenPorts
 ```
 
