@@ -1,0 +1,22 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "zai-vision": {
+      "type": "local",
+      "command": ["npx", "-y", "@z_ai/mcp-server@latest"],
+      "enabled": true,
+      "environment": {
+        "Z_AI_API_KEY": "{env:Z_AI_API_KEY}",
+        "Z_AI_MODE": "ZAI"
+      }
+    },
+    "zai-web-search": {
+      "type": "remote",
+      "url": "https://api.z.ai/api/mcp/web_search_prime/mcp",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {env:Z_AI_API_KEY}"
+      }
+    }
+  }
+}

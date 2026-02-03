@@ -1,0 +1,30 @@
+.DS_Store
+.build/
+Packages/
+xcuserdata/
+DerivedData/
+.swiftpm/
+*.xcarchive
+*.dSYM/
+OpenPorts.app
+Icon.icns
+.swiftpm/configuration/registries.json
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.netrc
+
+# Xcode
+*.pbxuser
+*.mode1v3
+*.moved-aside
+*.perspectivev3
+
+# Testing
+*.test.zip
+*.xcresult
+
+# macOS
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+

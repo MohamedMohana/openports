@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Import Code-Signing Certificates
+        uses: Apple-Actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.CERTIFICATES_P12 }}
+          p12-password: ${{ secrets.CERTIFICATES_PASSWORD }}
+          keychain: ${{ secrets.KEYCHAIN_PATH }}
+          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install SwiftLint and SwiftFormat
+        run: |
+          brew install swiftlint swiftformat
+
+      - name: Run Linting
+        run: ./Scripts/lint.sh
+
+      - name: Build and Package
+        env:
+          OPENPORTS_SIGNING_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
+          APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          OPENPORTS_SIGNING: production
+        run: |
+          ./Scripts/sign-and-notarize.sh
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            OpenPorts-*.zip
+            OpenPorts-*.dSYM.zip
+          draft: false
+          generate_release_notes: false
+
+      - name: Cleanup Keychain
+        if: always()
+        run: |
+          security delete-keychain ${{ secrets.KEYCHAIN_PATH }} || true
