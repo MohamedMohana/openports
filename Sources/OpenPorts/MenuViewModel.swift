@@ -174,4 +174,20 @@ class MenuViewModel: ObservableObject {
     func toggleShowSystemProcesses() {
         updateMenu()
     }
+
+    /// Show loading state immediately without triggering a refresh
+    func updateMenuWithLoadingState() {
+        guard let statusItemController = statusItemController else {
+            return
+        }
+
+        let descriptor = MenuDescriptor().build(
+            ports: [],
+            searchText: "",
+            showSystemProcesses: showSystemProcesses,
+            errorMessage: nil,
+            isLoading: true
+        )
+        statusItemController.updateMenu(descriptor)
+    }
 }
