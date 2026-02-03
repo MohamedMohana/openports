@@ -3,5 +3,5 @@
 --self insert
 --swiftversion 6.1
 --exclude .build,.swiftpm,DerivedData
+--linebreaks openBraces
 --trimwhitespace nonblank-ends-of-lines
---hoist hoistTry hoistIf
