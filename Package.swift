@@ -12,8 +12,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.6.0"),
-        .package(url: "https://github.com/sparkle-project/Sparkle.git", from: "2.8.1")
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.6.0")
     ],
     targets: [
         .target(
@@ -25,8 +24,7 @@ let package = Package(
         .executableTarget(
             name: "OpenPorts",
             dependencies: [
-                "OpenPortsCore",
-                .product(name: "Sparkle", package: "Sparkle")
+                "OpenPortsCore"
             ]
         ),
         .testTarget(

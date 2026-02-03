@@ -5,21 +5,19 @@ This tap provides a Homebrew cask formula for [OpenPorts](https://github.com/Moh
 ## Installation
 
 ```bash
-brew tap MohamedMohana/tap
-brew install MohamedMohana/tap/openports
+brew install --cask MohamedMohana/tap/openports
 ```
 
 ## Updating
 
 ```bash
-brew upgrade MohamedMohana/tap/openports
+brew upgrade --cask MohamedMohana/tap/openports
 ```
 
 ## Uninstallation
 
 ```bash
-brew uninstall --cask openports
-brew untap MohamedMohana/tap
+brew uninstall --cask MohamedMohana/tap/openports
 ```
 
 ## Documentation
