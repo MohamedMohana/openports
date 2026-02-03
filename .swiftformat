@@ -3,6 +3,5 @@
 --self insert
 --swiftversion 6.1
 --exclude .build,.swiftpm,DerivedData
---disable unusedPrivateDeclaration
---enable isEmpty
+--disable unusedPrivateDeclarations
 --linebreaks lf
