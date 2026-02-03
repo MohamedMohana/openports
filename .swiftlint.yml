@@ -1,12 +1,11 @@
 opt_in_rules:
   - array_init
-  - closure_spacing
   - explicit_init
   - fatal_error_message
   - first_where
-  - force_unwrapping
   - operator_usage_whitespace
   - overridden_super_call
+  - prohibited_interface_builder
   - redundant_nil_coalescing
   - sorted_imports
   - vertical_whitespace_closing_braces
@@ -21,45 +20,27 @@ disabled_rules:
   - implicitly_unwrapped_optional
   - for_where
   - trailing_closure
+  - nesting
+  - statement_level
+  - colon
+  - comma
+  - control_statement
+  - empty_count
+  - large_tuple
+  - type_body_length
+  - function_body_length
+  - identifier_name
+  - cyclomatic_complexity
 
-line_length:
-  warning: 120
-  error: 250
+excluded:
+  - Pods
+  - Sources/ExcludedFolder
+  - Sources/ExcludedFile.swift
+  - .build
+  - DerivedData
 
-type_body_length:
-  warning: 300
-  error: 500
+included:
+  - Sources
 
-file_length:
-  warning: 500
-  error: 1000
-
-function_body_length:
-  warning: 50
-  error: 100
-
-cyclomatic_complexity:
-  warning: 10
-  error: 20
-
-nesting:
-  type_level:
-    warning: 3
-  statement_level:
-    warning: 5
-
-identifier_name:
-  min_length:
-    warning: 2
-  max_length:
-    warning: 40
-  excluded:
-    - id
-    - x
-    - y
-    - z
-    - URL
-
-large_tuple:
-  warning: 3
-  error: 4
+allow_zero_lintable_files: false
+strict: false
