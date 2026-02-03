@@ -57,6 +57,8 @@ brew install --cask MohamedMohana/tap/openports
 open -a OpenPorts
 ```
 
+> **Note:** Auto-updates have been temporarily removed. Updates will be available through Homebrew (`brew upgrade --cask MohamedMohana/tap/openports`) until we establish proper Apple Developer credentials for notarization.
+
 ### Manual Installation
 
 1. Download latest release from [GitHub Releases](https://github.com/MohamedMohana/openports/releases)
