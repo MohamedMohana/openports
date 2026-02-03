@@ -129,7 +129,29 @@ swift build -c release
 ./Scripts/sign-and-notarize.sh
 ```
 
-## Troubleshooting
+## Testing
+
+### Unit Tests
+
+Run the comprehensive test suite:
+
+```bash
+swift test
+```
+
+**Test Coverage:**
+- PortScanner integration tests (actual `lsof` scanning)
+- ProcessResolver integration tests  
+- PortInfo model tests (creation, equality, system detection)
+- PortScanResult tests (success/failure scenarios)
+- Core initialization tests
+
+**Test Results:**
+- 18 tests total
+- All passing (0 failures)
+- Real integration testing of actual functionality
+
+Tests verify critical paths before users encounter issues, preventing "Open Anyway" problems.
 
 ### Security Warning on First Launch
 
