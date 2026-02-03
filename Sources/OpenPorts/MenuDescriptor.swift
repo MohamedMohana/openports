@@ -101,5 +101,5 @@ struct MenuDescriptor {
             
             return searchIn.contains { $0.contains(lowerSearchText) }
         }
-    }
+}
 }

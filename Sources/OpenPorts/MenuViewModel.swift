@@ -39,6 +39,7 @@ class MenuViewModel: ObservableObject {
         setupNotifications()
         startTimer()
         refreshPorts()
+        print("MenuViewModel initialized")
     }
     
     private func setupNotifications() {
@@ -70,42 +71,63 @@ class MenuViewModel: ObservableObject {
     }
     
     func refreshPorts() {
-        guard !isLoading else { return }
+        guard !isLoading else {
+            print("Already loading, skipping refresh")
+            return
+        }
         
+        print("Starting port scan...")
         isLoading = true
         
         Task {
+            print("Calling portScanner.scanOpenPorts()")
             let result = await portScanner.scanOpenPorts()
+            print("Port scanner result - success: \(result.success), ports count: \(result.ports.count)")
             
             if result.success {
+                print("Resolving process info for \(result.ports.count) ports")
                 let resolvedPorts = await processResolver.resolveProcessInfo(for: result.ports)
-                self.ports = resolvedPorts
+                print("Process resolution complete, resolved ports count: \(resolvedPorts.count)")
+                
+                await MainActor.run {
+                    self.ports = resolvedPorts
+                    self.updateMenu()
+                    self.isLoading = false
+                }
             } else {
-                self.ports = []
+                print("Port scan failed: \(result.error ?? "Unknown error")")
+                await MainActor.run {
+                    self.ports = []
+                    self.updateMenu()
+                    self.isLoading = false
+                }
             }
-            
-            self.updateMenu()
-            self.isLoading = false
         }
     }
     
     func terminateProcess(pid: Int, signal: Signal) async {
+        print("Attempting to terminate process \(pid) with signal: \(signal.rawValue)")
+        
         do {
             let result = try await processManager.terminateProcess(pid: pid, signal: signal)
-            print(result)
+            print("Process termination result: \(result)")
+            
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            refreshPorts()
         } catch {
             print("Failed to terminate process \(pid): \(error.localizedDescription)")
         }
-        
-        try? await Task.sleep(nanoseconds: 500_000_000)
-        refreshPorts()
     }
     
     private func startTimer() {
         invalidateTimer()
         
-        guard refreshInterval > 0 else { return }
+        guard refreshInterval > 0 else {
+            print("Auto-refresh disabled (interval: \(refreshInterval))")
+            return
+        }
         
+        print("Starting refresh timer with interval: \(refreshInterval) seconds")
         refreshTimer = Timer.scheduledTimer(
             withTimeInterval: refreshInterval,
             repeats: true
@@ -122,7 +144,12 @@ class MenuViewModel: ObservableObject {
     }
     
     private func updateMenu() {
-        guard let statusItemController = statusItemController else { return }
+        guard let statusItemController = statusItemController else {
+            print("statusItemController is nil, cannot update menu")
+            return
+        }
+        
+        print("Updating menu with \(ports.count) ports")
         
         let descriptor = MenuDescriptor().build(
             ports: ports,
@@ -131,6 +158,7 @@ class MenuViewModel: ObservableObject {
         )
         
         statusItemController.updateMenu(descriptor)
+        print("Menu updated successfully")
     }
     
     func updateRefreshInterval() {

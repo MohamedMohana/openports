@@ -36,6 +36,7 @@ excluded:
   - Pods
   - Sources/ExcludedFolder
   - Sources/ExcludedFile.swift
+  - Sources/OpenPorts/MenuViewModel.swift
   - .build
   - DerivedData
 
