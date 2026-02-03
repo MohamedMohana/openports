@@ -5,18 +5,10 @@ opt_in_rules:
   - fatal_error_message
   - first_where
   - force_unwrapping
-  - implicitly_unwrapped_optional
-  - multiline_arguments
-  - multiline_parameters
   - operator_usage_whitespace
   - overridden_super_call
-  - prohibited_interface_builder
   - redundant_nil_coalescing
   - sorted_imports
-  - strict_fileprivate
-  - strong_iboutlet
-  - trailing_closure
-  - unneeded_parentheses_in_closure_argument
   - vertical_whitespace_closing_braces
   - weak_delegate
 
@@ -24,6 +16,11 @@ disabled_rules:
   - explicit_self
   - trailing_whitespace
   - vertical_whitespace
+  - line_length
+  - trailing_comma
+  - implicitly_unwrapped_optional
+  - for_where
+  - trailing_closure
 
 line_length:
   warning: 120
