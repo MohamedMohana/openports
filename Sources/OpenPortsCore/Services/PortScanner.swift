@@ -33,106 +33,139 @@ public actor PortScanner {
         process.arguments = [
             "-nP",             // Don't resolve hostnames, show numeric ports
             "-iTCP",          // TCP ports only
-            "-sTCP:LISTEN",   // Listening TCP ports only
-            "-P",             // No port name resolution
-            "-c",             // Custom format
-            "\"p\\nT\\nL\\nc\\nU\"" // port, protocol, command, user
+            "-sTCP:LISTEN"    // Listening TCP ports only
         ]
-        
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-        
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = errorPipe
+
+        logger.debug("Executing lsof command: \(lsofPath) \(process.arguments?.joined(separator: " ") ?? "")")
+
         try process.run()
         process.waitUntilExit()
-        
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+
+        let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+        if let errorOutput = String(data: errorData, encoding: .utf8), !errorOutput.isEmpty {
+            logger.warning("lsof stderr: \(errorOutput)")
+        }
+
         guard let output = String(data: data, encoding: .utf8) else {
             throw PortScannerError.invalidOutput
         }
-        
+
         if process.terminationStatus != 0 {
+            logger.error("lsof failed with status \(process.terminationStatus)")
             throw PortScannerError.commandFailed(status: process.terminationStatus)
         }
-        
+
+        logger.debug("lsof output: \(output.count) characters")
         return output
     }
     
     /// Parse lsof output into PortInfo array.
+    /// Expected lsof format: COMMAND PID USER FD TYPE DEVICE SIZE/OFF NODE NAME
+    /// Example: ControlCe 617 mohana 9u IPv4 0x... 0t0 TCP *:7000 (LISTEN)
     private func parseLsofOutput(_ output: String) throws -> [PortInfo] {
         var ports: [PortInfo] = []
         let lines = output.components(separatedBy: .newlines).filter { !$0.isEmpty }
-        
+
+        logger.debug("Parsing \(lines.count) lines from lsof output")
+
         for (index, line) in lines.enumerated() {
-            if index == 0 {
-                continue // Skip header line
-            }
-            
-            // Expected format: COMMAND   PID   USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
-            // Sample: ControlCe   617 mohana    9u  IPv4 0xb933088e65555510      0t0  TCP *:7000 (LISTEN)
-            
-            // Split by whitespace to get columns
-            let columns = line.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
-            
-            guard columns.count >= 2 else {
-                logger.warning("Skipping malformed line: \(line)")
+            // Skip header line
+            if index == 0 || line.hasPrefix("COMMAND") {
                 continue
             }
-            
-            let command = columns[0]
-            guard let pid = Int(columns[1]) else {
-                logger.warning("Failed to parse PID from line: \(line)")
-                continue
+
+            let parsedPort = parseLsofLine(line)
+            if let port = parsedPort {
+                ports.append(port)
             }
-            
-            let user = columns[2]
-            
-            // Find the NODE column which contains the port info (last column before NAME)
-            // Look for pattern like "*:7000 (LISTEN)" or "[::1]:42050 (LISTEN)"
-            var port: Int = 0
-            for column in columns {
-                if column.contains(")") && column.contains(":") {
-                    // Extract port number from pattern like "*:7000 (LISTEN)" or "[::1]:42050 (LISTEN)"
-                    // Remove the LISTEN parenthetical part first
-                    let portAndAddr = column.replacingOccurrences(of: #" \([^)]*\)"#, with: "", options: .regularExpression)
-                    
-                    // Extract port from pattern like "*:7000" or "[::1]:42050"
-                    if let colonRange = portAndAddr.range(of: ":") {
-                        let afterColon = portAndAddr[colonRange.upperBound...]
-                        // Get everything up to the next space or end
-                        let portStr = afterColon.prefix(while: { $0 != " " })
-                        port = Int(portStr) ?? 0
-                    }
-                    break
-                }
-            }
-            
-            guard port > 0 else {
-                logger.warning("Failed to parse port from line: \(line)")
-                continue
-            }
-            
-            let portInfo = PortInfo(
-                port: port,
-                portProtocol: .tcp,
-                pid: pid,
-                processName: command,
-                appName: nil,
-                bundleID: nil,
-                executablePath: nil,
-                isSystemProcess: isSystemUser(user)
-            )
-            
-            ports.append(portInfo)
         }
-        
+
+        logger.info("Successfully parsed \(ports.count) ports from lsof output")
         return ports
     }
-    
+
+    /// Parse a single line of lsof output.
+    /// The NAME column can contain spaces like "127.0.0.1:8080 (LISTEN)",
+    /// so we need to reconstruct it from the last columns.
+    private func parseLsofLine(_ line: String) -> PortInfo? {
+        // Split by whitespace to get columns
+        let columns = line.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+
+        // Minimum columns needed: COMMAND, PID, USER, FD, TYPE, DEVICE, SIZE/OFF, NODE, NAME...
+        // NAME can span multiple columns due to spaces like "127.0.0.1:8080 (LISTEN)"
+        guard columns.count >= 8 else {
+            logger.warning("Line has insufficient columns (\(columns.count)): \(line)")
+            return nil
+        }
+
+        let command = columns[0]
+
+        guard let pid = Int(columns[1]) else {
+            logger.warning("Failed to parse PID from: \(columns[1])")
+            return nil
+        }
+
+        let user = columns[2]
+
+        // Reconstruct NAME column from columns 8 onwards (it may contain spaces)
+        // lsof columns: COMMAND(0) PID(1) USER(2) FD(3) TYPE(4) DEVICE(5) SIZE/OFF(6) NODE(7) NAME(8+)
+        let nameParts = columns[8...]
+        let nameColumn = nameParts.joined(separator: " ")
+
+        // Parse port from patterns like "*:7000" or "[::1]:42050" or "127.0.0.1:8080"
+        guard let port = extractPort(from: nameColumn) else {
+            logger.warning("Failed to extract port from: \(nameColumn)")
+            return nil
+        }
+
+        return PortInfo(
+            port: port,
+            portProtocol: .tcp,
+            pid: pid,
+            processName: command,
+            appName: nil,
+            bundleID: nil,
+            executablePath: nil,
+            isSystemProcess: isSystemUser(user)
+        )
+    }
+
+    /// Extract port number from lsof NAME column.
+    /// Handles patterns: *:7000, [::1]:42050, 127.0.0.1:8080
+    /// Also handles formats with (LISTEN) suffix
+    private func extractPort(from nameColumn: String) -> Int? {
+        // Remove "(LISTEN)" suffix if present
+        let cleaned = nameColumn
+            .replacingOccurrences(of: #"\s*\([^)]*\)$"#, with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
+
+        // Find the last colon and extract port
+        guard let lastColonIndex = cleaned.lastIndex(of: ":") else {
+            return nil
+        }
+
+        let portString = String(cleaned[cleaned.index(after: lastColonIndex)...])
+            .trimmingCharacters(in: .whitespaces)
+
+        // Validate port is numeric and in valid range
+        guard let port = Int(portString), port > 0 && port <= 65535 else {
+            return nil
+        }
+
+        return port
+    }
+
     /// Check if the user is a system user.
     private func isSystemUser(_ user: String) -> Bool {
-        let systemUsers = ["root", "_windowserver", "_mbsetupuser", "_spotlight"]
-        return systemUsers.contains(user)
+        let systemUsers = ["root", "_windowserver", "_mbsetupuser", "_spotlight", "_coreaudiod", "_locationd"]
+        return systemUsers.contains(user) || user.hasPrefix("_")
     }
 }
 

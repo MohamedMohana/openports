@@ -42,34 +42,50 @@ struct MenuDescriptor {
     func build(
         ports: [PortInfo],
         searchText: String = "",
-        showSystemProcesses: Bool = true
+        showSystemProcesses: Bool = true,
+        errorMessage: String? = nil,
+        isLoading: Bool = false
     ) -> MenuDescriptor {
         var entries = [MenuEntry]()
-        
+
         // Add refresh button at the top
         entries.append(.refreshButton)
-        
-        // Add search indicator
-        let searchDisplay = searchText.isEmpty ? "Search ports..." : "Filtering: \(searchText)"
-        entries.append(.text(searchDisplay, style: .secondary))
-        
+
+        // Show loading indicator or status
+        if isLoading {
+            entries.append(.text("Loading...", style: .secondary))
+        } else if let error = errorMessage {
+            entries.append(.text("Error: \(error)", style: .warning))
+        } else {
+            // Add search indicator
+            let searchDisplay = searchText.isEmpty ? "Search ports..." : "Filtering: \(searchText)"
+            entries.append(.text(searchDisplay, style: .secondary))
+        }
+
         // Add divider
-        if !ports.isEmpty {
-            entries.append(.divider)
-            
-            // Filter ports based on search text and system process setting
-            let filteredPorts = filterPorts(ports, searchText: searchText, showSystemProcesses: showSystemProcesses)
-            
-            if filteredPorts.isEmpty {
-                entries.append(.text("No ports found", style: .secondary))
+        entries.append(.divider)
+
+        // Filter ports based on search text and system process setting
+        let filteredPorts = filterPorts(ports, searchText: searchText, showSystemProcesses: showSystemProcesses)
+
+        if !isLoading {
+            if let error = errorMessage {
+                entries.append(.text("⚠️ \(error)", style: .warning))
+                entries.append(.text("Check System Settings > Privacy & Security", style: .secondary))
+            } else if filteredPorts.isEmpty {
+                entries.append(.text("No open ports found", style: .secondary))
             } else {
+                // Add port count
+                entries.append(.text("\(filteredPorts.count) open port(s)", style: .header))
+                entries.append(.divider)
+
                 // Add port rows
                 for port in filteredPorts {
                     entries.append(.portRow(port))
                 }
             }
         }
-        
+
         return MenuDescriptor(sections: [MenuSection(entries: entries)])
     }
     
@@ -79,16 +95,17 @@ struct MenuDescriptor {
         searchText: String,
         showSystemProcesses: Bool
     ) -> [PortInfo] {
-        guard !searchText.isEmpty else { return ports }
-        
         let lowerSearchText = searchText.lowercased()
-        
+
         return ports.filter { port in
             // Filter out system processes if disabled
             if !showSystemProcesses && port.isSystemProcess {
                 return false
             }
-            
+
+            // If no search text, include all non-system ports (if filtered)
+            guard !searchText.isEmpty else { return true }
+
             // Apply search filter
             let searchIn = [
                 String(port.port),
@@ -98,8 +115,8 @@ struct MenuDescriptor {
                 port.bundleID?.lowercased() ?? "",
                 port.executablePath?.lowercased() ?? ""
             ]
-            
+
             return searchIn.contains { $0.contains(lowerSearchText) }
         }
-}
+    }
 }

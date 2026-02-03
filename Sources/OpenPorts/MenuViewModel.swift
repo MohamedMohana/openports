@@ -8,7 +8,8 @@ import Combine
 class MenuViewModel: ObservableObject {
     @Published private(set) var ports: [PortInfo] = []
     @Published private(set) var isLoading: Bool = false
-    
+    @Published private(set) var lastError: String?
+
     private let portScanner: PortScanner
     private let processResolver: ProcessResolver
     private let processManager: ProcessManager
@@ -75,29 +76,33 @@ class MenuViewModel: ObservableObject {
             print("Already loading, skipping refresh")
             return
         }
-        
+
         print("Starting port scan...")
         isLoading = true
-        
+        lastError = nil
+
         Task {
             print("Calling portScanner.scanOpenPorts()")
             let result = await portScanner.scanOpenPorts()
             print("Port scanner result - success: \(result.success), ports count: \(result.ports.count)")
-            
+
             if result.success {
                 print("Resolving process info for \(result.ports.count) ports")
                 let resolvedPorts = await processResolver.resolveProcessInfo(for: result.ports)
                 print("Process resolution complete, resolved ports count: \(resolvedPorts.count)")
-                
+
                 await MainActor.run {
                     self.ports = resolvedPorts
+                    self.lastError = nil
                     self.updateMenu()
                     self.isLoading = false
                 }
             } else {
-                print("Port scan failed: \(result.error ?? "Unknown error")")
+                let errorMsg = result.error ?? "Unknown error"
+                print("Port scan failed: \(errorMsg)")
                 await MainActor.run {
                     self.ports = []
+                    self.lastError = errorMsg
                     self.updateMenu()
                     self.isLoading = false
                 }
@@ -148,15 +153,17 @@ class MenuViewModel: ObservableObject {
             print("statusItemController is nil, cannot update menu")
             return
         }
-        
-        print("Updating menu with \(ports.count) ports")
-        
+
+        print("Updating menu with \(ports.count) ports, error: \(lastError ?? "none")")
+
         let descriptor = MenuDescriptor().build(
             ports: ports,
             searchText: "",
-            showSystemProcesses: showSystemProcesses
+            showSystemProcesses: showSystemProcesses,
+            errorMessage: lastError,
+            isLoading: isLoading
         )
-        
+
         statusItemController.updateMenu(descriptor)
         print("Menu updated successfully")
     }
