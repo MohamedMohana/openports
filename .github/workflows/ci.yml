@@ -18,6 +18,12 @@ jobs:
         run: |
           brew install swiftlint swiftformat
 
+      - name: Clear SwiftFormat Cache
+        run: rm -f /Users/runner/.swiftpm/swiftformat.cache.json
+        
+      - name: Install SwiftFormat
+        run: brew install swiftformat
+        
       - name: Run SwiftFormat
         run: swiftformat Sources Tests
 
