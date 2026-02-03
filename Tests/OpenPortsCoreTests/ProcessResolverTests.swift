@@ -31,7 +31,6 @@ final class ProcessResolverTests: XCTestCase {
         
         XCTAssertEqual(resolved.count, 3)
     }
-}
     
     func testSystemProcessDetection() {
         let systemPath = "/usr/sbin/launchd"
