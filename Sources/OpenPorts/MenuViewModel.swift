@@ -177,6 +177,7 @@ class MenuViewModel: ObservableObject {
     }
     
     func updateRefreshInterval() {
+        AppLogger.shared.log("updateRefreshInterval() called, interval: \(refreshInterval)")
         startTimer()
     }
     

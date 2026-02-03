@@ -53,15 +53,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Show initial loading state immediately
         menuViewModel.updateMenuWithLoadingState()
 
-        // Now trigger the first refresh - this will properly update the menu
-        menuViewModel.refreshPorts()
-        
         // Set initial preferences
         UserDefaults.standard.register(defaults: [
             "refreshInterval": 5.0,
             "showSystemProcesses": true,
             "groupPorts": false
         ])
+        
+        // Start auto-refresh timer
+        menuViewModel.updateRefreshInterval()
+        
+        // Now trigger the first refresh
+        menuViewModel.refreshPorts()
         
         print("OpenPorts started successfully")
     }
