@@ -45,7 +45,7 @@ public struct PortInfo: Identifiable, Sendable, Equatable {
 }
 
 /// Represents the result of a port scan operation
-public struct PortScanResult: Sendable {
+public struct PortScanResult: Sendable, Equatable {
     /// List of discovered ports
     public let ports: [PortInfo]
     
