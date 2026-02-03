@@ -1,10 +1,10 @@
 --indent 4
 --maxwidth 120
 --self insert
---swiftversion 6.0
+--swiftversion 6.1
 --exclude .build,.swiftpm,DerivedData
 --disable unusedPrivateDeclaration
 --enable isEmpty
 --linebreaks openBraces
 --trimwhitespace nonblank-ends-of-lines
---hoistPatternLet hoistTry hoistIf
+--hoistpattern hoistTry hoistIf
