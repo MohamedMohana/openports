@@ -144,6 +144,12 @@ install_binary() {
 
 install_binary "OpenPorts" "$APP/Contents/MacOS/OpenPorts"
 
+# Copy Sparkle.framework into app bundle
+if [[ -d ".build/${ARCH_LIST[0]}-apple-macosx/$CONF/Sparkle.framework" ]]; then
+  echo "Copying Sparkle.framework..."
+  cp -R ".build/${ARCH_LIST[0]}-apple-macosx/$CONF/Sparkle.framework" "$APP/Contents/Frameworks/"
+fi
+
 if [[ "$SIGNING_MODE" == "adhoc" ]]; then
   CODESIGN_ID="-"
   CODESIGN_ARGS=(--force --sign "$CODESIGN_ID")
