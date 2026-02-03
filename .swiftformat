@@ -1,6 +1,0 @@
---indent 4
---maxwidth 120
---self insert
---swiftversion 6.1
---exclude .build,.swiftpm,DerivedData
---linebreaks lf
