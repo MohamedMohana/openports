@@ -22,10 +22,11 @@ APP="$ROOT/OpenPorts.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 
-ICON_SOURCE="$ROOT/Icon.icon"
+ICON_SOURCE="$ROOT/Icon.iconset"
 ICON_TARGET="$ROOT/Icon.icns"
-if [[ -f "$ICON_SOURCE" ]]; then
-  iconutil --convert icns --output "$ICON_TARGET" "$ICON_SOURCE"
+if [[ -d "$ICON_SOURCE" ]]; then
+  iconutil --convert icns --output "$ICON_TARGET" "$ICON_SOURCE" 2>/dev/null || \
+  sips -s format icns "$ICON_SOURCE/openports-512.png" --out "$ICON_TARGET" >/dev/null 2>&1
 fi
 
 BUNDLE_ID="com.mohamedmohana.openports"
@@ -146,7 +147,7 @@ install_binary "OpenPorts" "$APP/Contents/MacOS/OpenPorts"
 if [[ "$SIGNING_MODE" == "adhoc" ]]; then
   CODESIGN_ID="-"
   CODESIGN_ARGS=(--force --sign "$CODESIGN_ID")
-elif [[ "$OPENPORTS_SIGNING_IDENTITY:-" ]]; then
+elif [[ "${OPENPORTS_SIGNING_IDENTITY:-}" ]]; then
   CODESIGN_ID="${OPENPORTS_SIGNING_IDENTITY}"
   CODESIGN_ARGS=(--force --timestamp --options runtime --sign "$CODESIGN_ID")
 else

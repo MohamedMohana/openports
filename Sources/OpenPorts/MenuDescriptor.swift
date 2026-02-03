@@ -1,4 +1,5 @@
 import Foundation
+import OpenPortsCore
 
 /// Represents a section in the menu.
 struct MenuSection {
@@ -43,14 +44,14 @@ struct MenuDescriptor {
         searchText: String = "",
         showSystemProcesses: Bool = true
     ) -> MenuDescriptor {
-        var entries: [MenuEntry]()
+        var entries = [MenuEntry]()
         
         // Add refresh button at the top
         entries.append(.refreshButton)
         
         // Add search indicator
         let searchDisplay = searchText.isEmpty ? "Search ports..." : "Filtering: \(searchText)"
-        entries.append(.text(searchDisplay, .secondary))
+        entries.append(.text(searchDisplay, style: .secondary))
         
         // Add divider
         if !ports.isEmpty {
@@ -60,7 +61,7 @@ struct MenuDescriptor {
             let filteredPorts = filterPorts(ports, searchText: searchText, showSystemProcesses: showSystemProcesses)
             
             if filteredPorts.isEmpty {
-                entries.append(.text("No ports found", .secondary))
+                entries.append(.text("No ports found", style: .secondary))
             } else {
                 // Add port rows
                 for port in filteredPorts {
@@ -100,4 +101,5 @@ struct MenuDescriptor {
             
             return searchIn.contains { $0.contains(lowerSearchText) }
         }
+    }
 }

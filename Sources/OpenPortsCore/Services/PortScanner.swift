@@ -3,6 +3,8 @@ import Logging
 
 /// Service for scanning open ports on the system using `lsof`.
 public actor PortScanner {
+    public init() {
+    }
     private let logger = Logger(label: "com.openports.portscanner")
     private let lsofPath = "/usr/sbin/lsof"
     

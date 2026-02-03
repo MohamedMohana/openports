@@ -5,7 +5,7 @@ enum LaunchAtLoginManager {
     private static let serviceIdentifier = "com.mohamedmohana.openports.launcher"
     
     /// Check if app is set to launch at login.
-    var isEnabled: Bool {
+    static var isEnabled: Bool {
         SMAppService.mainApp.status == .enabled
     }
     

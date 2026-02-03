@@ -5,6 +5,7 @@ struct PreferencesView: View {
     @AppStorage("refreshInterval") private var refreshInterval: Double = 5
     @AppStorage("groupPorts") private var groupPorts: Bool = false
     @AppStorage("showSystemProcesses") private var showSystemProcesses: Bool = true
+    @State private var launchAtLoginEnabled: Bool = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -35,10 +36,20 @@ struct PreferencesView: View {
                 
                 Toggle("Show system processes", isOn: $showSystemProcesses)
                     .toggleStyle(.switch)
+                
+                Toggle("Launch at login", isOn: $launchAtLoginEnabled)
+                    .toggleStyle(.switch)
+                    .onChange(of: launchAtLoginEnabled) { _, newValue in
+                        LaunchAtLoginManager.setEnabled(newValue)
+                    }
             }
             .padding()
         }
         .frame(width: 400)
         .padding(.vertical, 20)
+        .onAppear {
+            launchAtLoginEnabled = LaunchAtLoginManager.isEnabled
+        }
     }
 }
+

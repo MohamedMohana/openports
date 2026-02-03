@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![OpenPorts Icon](Icon.icon/Assets/openports-128.png)
+![OpenPorts Icon](Icon.iconset/openports-128.png)
 
 ### Lightweight macOS Menu Bar App for Monitoring Local Ports and Processes
 

@@ -4,6 +4,8 @@ import Logging
 
 /// Service for resolving process information from PID to application details.
 public actor ProcessResolver {
+    public init() {
+    }
     private let logger = Logger(label: "com.openports.processresolver")
     
     /// Resolve detailed information for a list of PortInfo entries.
