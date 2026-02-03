@@ -36,10 +36,9 @@ class MenuViewModel: ObservableObject {
         self.portScanner = portScanner
         self.processResolver = processResolver
         self.processManager = processManager
-        
+
         setupNotifications()
-        startTimer()
-        refreshPorts()
+        // Note: Initial refresh is triggered by AppDelegate after statusItemController is set
         print("MenuViewModel initialized")
     }
     
