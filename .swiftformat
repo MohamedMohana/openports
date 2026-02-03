@@ -3,8 +3,5 @@
 --self insert
 --swiftversion 6.1
 --exclude .build,.swiftpm,DerivedData
---disable unusedPrivateDeclaration
---enable isEmpty
 --linebreaks openBraces
 --trimwhitespace nonblank-ends-of-lines
---hoistpattern hoistTry hoistIf
