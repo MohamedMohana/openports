@@ -39,7 +39,7 @@ class MenuViewModel: ObservableObject {
 
         setupNotifications()
         // Note: Initial refresh is triggered by AppDelegate after statusItemController is set
-        print("MenuViewModel initialized")
+        AppLogger.shared.log("MenuViewModel initialized")
     }
     
     private func setupNotifications() {
@@ -72,23 +72,23 @@ class MenuViewModel: ObservableObject {
     
     func refreshPorts() {
         guard !isLoading else {
-            print("Already loading, skipping refresh")
+            AppLogger.shared.log("Already loading, skipping refresh")
             return
         }
 
-        print("Starting port scan...")
+        AppLogger.shared.log("Starting port scan...")
         isLoading = true
         lastError = nil
 
         Task {
-            print("Calling portScanner.scanOpenPorts()")
+            AppLogger.shared.log("Calling portScanner.scanOpenPorts()")
             let result = await portScanner.scanOpenPorts()
-            print("Port scanner result - success: \(result.success), ports count: \(result.ports.count)")
+            AppLogger.shared.log("Port scanner result - success: \(result.success), ports count: \(result.ports.count)")
 
             if result.success {
-                print("Resolving process info for \(result.ports.count) ports")
+                AppLogger.shared.log("Resolving process info for \(result.ports.count) ports")
                 let resolvedPorts = await processResolver.resolveProcessInfo(for: result.ports)
-                print("Process resolution complete, resolved ports count: \(resolvedPorts.count)")
+                AppLogger.shared.log("Process resolution complete, resolved ports count: \(resolvedPorts.count)")
 
                 await MainActor.run {
                     self.ports = resolvedPorts
@@ -98,7 +98,7 @@ class MenuViewModel: ObservableObject {
                 }
             } else {
                 let errorMsg = result.error ?? "Unknown error"
-                print("Port scan failed: \(errorMsg)")
+                AppLogger.shared.log("Port scan failed: \(errorMsg)")
                 await MainActor.run {
                     self.ports = []
                     self.lastError = errorMsg
@@ -110,16 +110,16 @@ class MenuViewModel: ObservableObject {
     }
     
     func terminateProcess(pid: Int, signal: Signal) async {
-        print("Attempting to terminate process \(pid) with signal: \(signal.rawValue)")
+        AppLogger.shared.log("Attempting to terminate process \(pid) with signal: \(signal.rawValue)")
         
         do {
             let result = try await processManager.terminateProcess(pid: pid, signal: signal)
-            print("Process termination result: \(result)")
+            AppLogger.shared.log("Process termination result: \(result)")
             
             try? await Task.sleep(nanoseconds: 500_000_000)
             refreshPorts()
         } catch {
-            print("Failed to terminate process \(pid): \(error.localizedDescription)")
+            AppLogger.shared.log("Failed to terminate process \(pid): \(error.localizedDescription)")
         }
     }
     
@@ -127,11 +127,11 @@ class MenuViewModel: ObservableObject {
         invalidateTimer()
         
         guard refreshInterval > 0 else {
-            print("Auto-refresh disabled (interval: \(refreshInterval))")
+            AppLogger.shared.log("Auto-refresh disabled (interval: \(refreshInterval))")
             return
         }
         
-        print("Starting refresh timer with interval: \(refreshInterval) seconds")
+        AppLogger.shared.log("Starting refresh timer with interval: \(refreshInterval) seconds")
         refreshTimer = Timer.scheduledTimer(
             withTimeInterval: refreshInterval,
             repeats: true
@@ -149,11 +149,11 @@ class MenuViewModel: ObservableObject {
     
     private func updateMenu() {
         guard let statusItemController = statusItemController else {
-            print("statusItemController is nil, cannot update menu")
+            AppLogger.shared.log("statusItemController is nil, cannot update menu")
             return
         }
 
-        print("Updating menu with \(ports.count) ports, error: \(lastError ?? "none")")
+        AppLogger.shared.log("Updating menu with \(ports.count) ports, error: \(lastError ?? "none")")
 
         let descriptor = MenuDescriptor().build(
             ports: ports,
@@ -164,7 +164,7 @@ class MenuViewModel: ObservableObject {
         )
 
         statusItemController.updateMenu(descriptor)
-        print("Menu updated successfully")
+        AppLogger.shared.log("Menu updated successfully")
     }
     
     func updateRefreshInterval() {

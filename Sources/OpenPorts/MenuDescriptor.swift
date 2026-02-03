@@ -19,6 +19,7 @@ enum MenuEntry {
     case portRow(PortInfo)
     case button(String, action: () -> Void)
     case refreshButton
+    case viewLogsButton
 }
 
 enum MenuEntryStyle {
@@ -85,6 +86,10 @@ struct MenuDescriptor {
                 }
             }
         }
+
+        // Add view logs button
+        entries.append(.divider)
+        entries.append(.viewLogsButton)
 
         return MenuDescriptor(sections: [MenuSection(entries: entries)])
     }

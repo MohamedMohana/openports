@@ -65,6 +65,11 @@ final class StatusItemController {
                     let menuItem = NSMenuItem(title: "Refresh", action: #selector(StatusItemController.refreshMenu), keyEquivalent: "r")
                     menuItem.target = self
                     menu?.addItem(menuItem)
+                    
+                case .viewLogsButton:
+                    let menuItem = NSMenuItem(title: "View Logs", action: #selector(StatusItemController.viewLogs), keyEquivalent: "")
+                    menuItem.target = self
+                    menu?.addItem(menuItem)
                 }
             }
         }
@@ -137,6 +142,33 @@ final class StatusItemController {
     
     @objc private func quit() {
         NSApplication.shared.terminate(nil)
+    }
+    
+    @objc private func viewLogs() {
+        let logs = AppLogger.shared.getLogsText()
+        
+        // Create a simple alert to show logs
+        let alert = NSAlert()
+        alert.messageText = "OpenPorts Debug Logs"
+        alert.informativeText = logs.isEmpty ? "No logs available" : logs
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Copy to Clipboard")
+        alert.addButton(withTitle: "Close")
+        alert.addButton(withTitle: "Clear Logs")
+        
+        let response = alert.runModal()
+        
+        switch response {
+        case .alertFirstButtonReturn:
+            // Copy to clipboard
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(logs, forType: .string)
+        case .alertThirdButtonReturn:
+            // Clear logs
+            AppLogger.shared.clear()
+        default:
+            break
+        }
     }
 }
 
