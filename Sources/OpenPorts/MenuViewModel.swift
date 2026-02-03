@@ -7,7 +7,13 @@ import Combine
 @MainActor
 class MenuViewModel: ObservableObject {
     @Published private(set) var ports: [PortInfo] = []
-    @Published private(set) var isLoading: Bool = false
+    @Published private(set) var isLoading: Bool = false {
+        didSet {
+            if oldValue != isLoading {
+                updateMenu()
+            }
+        }
+    }
     @Published private(set) var lastError: String?
 
     private let portScanner: PortScanner
