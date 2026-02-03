@@ -144,8 +144,8 @@ class MenuViewModel: ObservableObject {
             withTimeInterval: refreshInterval,
             repeats: true
         ) { [weak self] _ in
-            AppLogger.shared.log("Timer fired, calling refreshPorts()")
             Task { @MainActor in
+                AppLogger.shared.log("Timer fired, calling refreshPorts()")
                 self?.refreshPorts()
             }
         }
