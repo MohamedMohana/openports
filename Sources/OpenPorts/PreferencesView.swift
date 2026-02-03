@@ -2,7 +2,7 @@ import SwiftUI
 import OpenPortsCore
 
 struct PreferencesView: View {
-    @AppStorage("refreshInterval") private var refreshInterval: Double = 5.0
+    @AppStorage("refreshInterval") private var refreshInterval: Double = 5
     @AppStorage("groupPorts") private var groupPorts: Bool = false
     @AppStorage("showSystemProcesses") private var showSystemProcesses: Bool = true
     
@@ -19,7 +19,6 @@ struct PreferencesView: View {
                     Text("Refresh Interval")
                         .frame(width: 120, alignment: .trailing)
                     Spacer()
-                    
                     Picker("", selection: $refreshInterval) {
                         Text("3 seconds").tag(3)
                         Text("5 seconds").tag(5)

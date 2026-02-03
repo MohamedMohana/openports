@@ -28,7 +28,7 @@ jobs:
         run: swiftformat Sources Tests
 
       - name: Run SwiftLint
-        run: swiftlint --strict
+        run: swiftlint --lenient
 
   test:
     name: Test

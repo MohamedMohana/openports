@@ -112,8 +112,13 @@ final class ProcessManager {
         
         let task = Process()
         task.executableURL = URL(fileURLWithPath: scriptPath)
-        try? task.run()
-        task.waitUntilExit()
+        
+        do {
+            try task.run()
+            task.waitUntilExit()
+        } catch {
+            
+        }
         
         try? FileManager.default.removeItem(atPath: scriptPath)
     }
