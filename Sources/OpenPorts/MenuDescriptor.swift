@@ -1,6 +1,14 @@
 import Foundation
 import OpenPortsCore
 
+/// Categorized port with additional metadata
+public struct CategorizedPortDisplay {
+    public let portInfo: PortInfo
+    public let category: PortCategory?
+    public let technology: String?
+    public let projectName: String?
+}
+
 /// Represents a section in the menu.
 struct MenuSection {
     var header: String?
@@ -16,7 +24,7 @@ struct MenuSection {
 enum MenuEntry {
     case text(String, style: MenuEntryStyle)
     case divider
-    case portRow(PortInfo)
+    case portRow(PortInfo, category: PortCategory?, technology: String?, projectName: String?)
     case button(String, action: () -> Void)
     case refreshButton
     case viewLogsButton
@@ -45,9 +53,11 @@ struct MenuDescriptor {
         searchText: String = "",
         showSystemProcesses: Bool = true,
         errorMessage: String? = nil,
-        isLoading: Bool = false
+        isLoading: Bool = false,
+        groupByCategory: Bool = false
     ) -> MenuDescriptor {
         var entries = [MenuEntry]()
+        let categorizer = PortCategorizer()
 
         // Add refresh button at the top
         entries.append(.refreshButton)
@@ -80,9 +90,30 @@ struct MenuDescriptor {
                 entries.append(.text("\(filteredPorts.count) open port(s)", style: .header))
                 entries.append(.divider)
 
-                // Add port rows
-                for port in filteredPorts {
-                    entries.append(.portRow(port))
+                if groupByCategory {
+                    // Group ports by category
+                    let groupedPorts = categorizer.groupByCategory(filteredPorts)
+                    let sortedCategories = groupedPorts.keys.sorted { $0.rawValue < $1.rawValue }
+
+                    for category in sortedCategories {
+                        if let portsInCategory = groupedPorts[category] {
+                            // Add category header
+                            entries.append(.text("\(category.icon) \(category.rawValue) - \(portsInCategory.count)", style: .header))
+                            entries.append(.divider)
+
+                            // Add port rows in this category
+                            for port in portsInCategory {
+                                let categorized = categorizer.categorize(port)
+                                entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
+                            }
+                        }
+                    }
+                } else {
+                    // Add port rows
+                    for port in filteredPorts {
+                        let categorized = categorizer.categorize(port)
+                        entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
+                    }
                 }
             }
         }

@@ -49,11 +49,14 @@ final class StatusItemController {
                     let dividerItem = NSMenuItem.separator()
                     menu?.addItem(dividerItem)
                     
-                case .portRow(let port):
-                    let portTitle = ":\(port.port) \(port.portProtocol.rawValue)"
+                case .portRow(let port, let category, let technology, let projectName):
+                    var portTitle = ":\(port.port) \(port.portProtocol.rawValue)"
+                    if let icon = category?.icon {
+                        portTitle = "\(icon) \(portTitle)"
+                    }
                     
                     let menuItem = NSMenuItem(title: portTitle, action: nil, keyEquivalent: "")
-                    menuItem.submenu = createPortMenu(for: port)
+                    menuItem.submenu = createPortMenu(for: port, category: category, technology: technology, projectName: projectName)
                     menu?.addItem(menuItem)
                     
                 case .button(let title, _):
@@ -87,9 +90,44 @@ final class StatusItemController {
     }
     
     /// Create a submenu for a port row with kill options.
-    private func createPortMenu(for port: PortInfo) -> NSMenu {
+    private func createPortMenu(for port: PortInfo, category: PortCategory?, technology: String?, projectName: String?) -> NSMenu {
         let submenu = NSMenu()
-        
+
+        // Add category info
+        if let category = category {
+            let categoryItem = NSMenuItem(title: "\(category.icon) Category: \(category.rawValue)", action: nil, keyEquivalent: "")
+            categoryItem.isEnabled = false
+            submenu.addItem(categoryItem)
+        }
+
+        // Add technology info
+        if let technology = technology {
+            let techItem = NSMenuItem(title: "🔧 Technology: \(technology)", action: nil, keyEquivalent: "")
+            techItem.isEnabled = false
+            submenu.addItem(techItem)
+        }
+
+        // Add project name
+        if let projectName = projectName {
+            let projectItem = NSMenuItem(title: "📂 Project: \(projectName)", action: nil, keyEquivalent: "")
+            projectItem.isEnabled = false
+            submenu.addItem(projectItem)
+        }
+
+        // Add process info
+        let processInfoItem = NSMenuItem(title: "📋 \(port.processName)", action: nil, keyEquivalent: "")
+        processInfoItem.isEnabled = false
+        submenu.addItem(processInfoItem)
+
+        // Add PID
+        let pidItem = NSMenuItem(title: "ID: \(port.pid)", action: nil, keyEquivalent: "")
+        pidItem.isEnabled = false
+        submenu.addItem(pidItem)
+
+        // Add divider
+        submenu.addItem(NSMenuItem.separator())
+
+        // Add termination options
         let terminateTitle = port.isSystemProcess ? "⚠️ Terminate (System Process)" : "Terminate"
         let terminateItem = NSMenuItem(
             title: terminateTitle,
@@ -99,7 +137,7 @@ final class StatusItemController {
         terminateItem.target = self
         terminateItem.representedObject = port.pid
         submenu.addItem(terminateItem)
-        
+
         let forceKillTitle = port.isSystemProcess ? "⚠️ Force Kill (System Process)" : "Force Kill"
         let forceKillItem = NSMenuItem(
             title: forceKillTitle,
@@ -109,7 +147,7 @@ final class StatusItemController {
         forceKillItem.target = self
         forceKillItem.representedObject = port.pid
         submenu.addItem(forceKillItem)
-        
+
         return submenu
     }
     

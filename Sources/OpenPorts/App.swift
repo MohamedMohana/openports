@@ -57,7 +57,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         UserDefaults.standard.register(defaults: [
             "refreshInterval": 0.0,
             "showSystemProcesses": true,
-            "groupPorts": false
+            "groupPorts": false,
+            "groupByCategory": false
         ])
         
         // Now trigger the first refresh (manual only - no auto-refresh)

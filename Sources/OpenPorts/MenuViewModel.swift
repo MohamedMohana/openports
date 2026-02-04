@@ -26,6 +26,10 @@ class MenuViewModel: ObservableObject {
         get { userDefaults.bool(forKey: "showSystemProcesses") }
         set { userDefaults.set(newValue, forKey: "showSystemProcesses") }
     }
+    private var groupByCategory: Bool {
+        get { userDefaults.bool(forKey: "groupByCategory") }
+        set { userDefaults.set(newValue, forKey: "groupByCategory") }
+    }
     
     var statusItemController: StatusItemController?
     
@@ -137,7 +141,8 @@ class MenuViewModel: ObservableObject {
             searchText: "",
             showSystemProcesses: showSystemProcesses,
             errorMessage: lastError,
-            isLoading: isLoading
+            isLoading: isLoading,
+            groupByCategory: groupByCategory
         )
 
         statusItemController.updateMenu(descriptor)
@@ -145,6 +150,10 @@ class MenuViewModel: ObservableObject {
     }
     
     func toggleShowSystemProcesses() {
+        updateMenu()
+    }
+
+    func toggleGroupByCategory() {
         updateMenu()
     }
 

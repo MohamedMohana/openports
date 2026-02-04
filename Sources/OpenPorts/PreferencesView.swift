@@ -5,6 +5,7 @@ struct PreferencesView: View {
     @AppStorage("refreshInterval") private var refreshInterval: Double = 5
     @AppStorage("groupPorts") private var groupPorts: Bool = false
     @AppStorage("showSystemProcesses") private var showSystemProcesses: Bool = true
+    @AppStorage("groupByCategory") private var groupByCategory: Bool = false
     @State private var launchAtLoginEnabled: Bool = false
     
     var body: some View {
@@ -33,6 +34,10 @@ struct PreferencesView: View {
                 
                 Toggle("Group ports by app", isOn: $groupPorts)
                     .toggleStyle(.switch)
+                
+                Toggle("Group ports by category", isOn: $groupByCategory)
+                    .toggleStyle(.switch)
+                    .help("Group ports by type (Development, Database, System, etc.)")
                 
                 Toggle("Show system processes", isOn: $showSystemProcesses)
                     .toggleStyle(.switch)
