@@ -54,7 +54,15 @@ final class StatusItemController {
                     if let icon = category?.icon {
                         portTitle = "\(icon) \(portTitle)"
                     }
-                    
+
+                    if port.isNew {
+                        portTitle = "⚡\(portTitle)"
+                    }
+
+                    if let safety = port.safety {
+                        portTitle = "\(portTitle) [\(safety.icon)]"
+                    }
+
                     let menuItem = NSMenuItem(title: portTitle, action: nil, keyEquivalent: "")
                     menuItem.submenu = createPortMenu(for: port, category: category, technology: technology, projectName: projectName)
                     menu?.addItem(menuItem)
@@ -92,6 +100,20 @@ final class StatusItemController {
     /// Create a submenu for a port row with kill options.
     private func createPortMenu(for port: PortInfo, category: PortCategory?, technology: String?, projectName: String?) -> NSMenu {
         let submenu = NSMenu()
+
+        // Add safety level
+        if let safety = port.safety {
+            let safetyItem = NSMenuItem(title: "\(safety.icon) Safety: \(safety.rawValue)", action: nil, keyEquivalent: "")
+            safetyItem.isEnabled = false
+            submenu.addItem(safetyItem)
+        }
+
+        // Add uptime if available
+        if let uptime = port.formattedUptime {
+            let uptimeItem = NSMenuItem(title: "⏱️ Uptime: \(uptime)", action: nil, keyEquivalent: "")
+            uptimeItem.isEnabled = false
+            submenu.addItem(uptimeItem)
+        }
 
         // Add category info
         if let category = category {

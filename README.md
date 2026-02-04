@@ -37,6 +37,9 @@ OpenPorts is a lightweight macOS menu bar application that displays which local 
 
 ## Features
 
+- 🎯 **Port Safety Ratings** - Color-coded safety indicators (🔴 Critical, 🟠 Important, 🟢 Optional, 🔵 User-Created) to help you make informed decisions
+- ⚡ **New Process Detection** - Lightning bolt badge on processes started within the last 5 minutes
+- 🏃 **Uptime Tracking** - See how long each process has been running (5m, 1h, 2d, etc.)
 - 🎨 **Port Categorization** - Automatically categorizes ports by type (Development, Database, System, etc.) with colorful icons
 - 📂 **Project Name Detection** - Detects and displays project names for development tools (Python, Node.js, etc.)
 - 🔧 **Technology Detection** - Shows specific technology being used (Python, Node.js, PostgreSQL, Docker, etc.)
@@ -49,6 +52,21 @@ OpenPorts is a lightweight macOS menu bar application that displays which local 
 - 🚀 **Launch at Login** - Automatically start when you log in
 - 🌙 **Dark Mode** - Fully supports macOS dark mode
 - 💻 **Multi-Architecture** - Supports Apple Silicon (M1/M2/M3) and Intel Macs
+
+### Safety Rating System
+
+OpenPorts helps you understand whether a process should be terminated with a color-coded safety rating system:
+
+| Safety Level | Icon | Description | Example |
+|--------------|-------|-------------|----------|
+| 🔴 Critical | Red | System services that should NOT be killed (SSH, HTTP, HTTPS, core macOS processes) | Port 22 (SSH), Port 443 (HTTPS) |
+| 🟠 Important | Orange | Important services that may need restart after killing (databases, production servers) | Port 5432 (PostgreSQL), Port 3306 (MySQL) |
+| 🟢 Optional | Green | Non-essential services and user applications | Custom web apps on port 8080 |
+| 🔵 User-Created | Blue | Clearly user-initiated development servers (npm start, python manage.py) | Port 3000 (Node.js), Port 5000 (Python Flask) |
+
+**Process Indicators:**
+- ⚡ **New process** - Started within the last 5 minutes (likely a temporary dev server)
+- 🏃 **Uptime** - How long the process has been running (5m, 1h, 2d)
 
 ## Installation
 
@@ -92,16 +110,21 @@ open OpenPorts.app
 ## Usage
 
 1. **View Ports** - Click the OpenPorts icon in the menu bar to see all open listening ports
-2. **Categorized View** - Ports are automatically categorized with colorful icons (💻 Development, 🗄️ Database, etc.)
-3. **View Details** - Click any port to see:
-   - Category (e.g., 💻 Development)
-   - Technology (e.g., Python, Node.js)
-   - Project name (if detected, e.g., "survey-kku")
-   - Process name and ID
-4. **Refresh** - Press "Refresh" (or `R`) to update the port list
-5. **Group by Category** - Enable in Preferences to organize ports by type
-6. **Terminate Process** - From the port submenu, select "Terminate" or "Force Kill"
-7. **Preferences** - Access preferences to configure display options
+2. **Safety Ratings** - Each port shows a color-coded safety badge (🔴 Critical, 🟠 Important, 🟢 Optional, 🔵 User-Created) to help you decide whether to kill it
+3. **New Process Indicator** - Lightning bolt (⚡) appears on processes started within the last 5 minutes
+4. **Uptime Display** - See how long each process has been running in the port submenu
+5. **Categorized View** - Ports are automatically categorized with colorful icons (💻 Development, 🗄️ Database, etc.)
+6. **View Details** - Click any port to see:
+    - Safety level (e.g., 🔵 User-Created)
+    - Uptime (e.g., ⏱️ 5m)
+    - Category (e.g., 💻 Development)
+    - Technology (e.g., Python, Node.js)
+    - Project name (if detected, e.g., "survey-kku")
+    - Process name and ID
+7. **Refresh** - Press "Refresh" (or `R`) to update the port list
+8. **Group by Category** - Enable in Preferences to organize ports by type
+9. **Terminate Process** - From the port submenu, select "Terminate" or "Force Kill"
+10. **Preferences** - Access preferences to configure display options
 
 ## Configuration
 
@@ -113,6 +136,9 @@ OpenPorts stores preferences in `~/Library/Containers/com.mohamedmohana.openport
 - **Group by Category** - Group ports by category (Development, Database, System, etc.) for organized view
 - **Group by App** - Group ports by application instead of listing all processes
 - **Show System Processes** - Show/hide system processes (marked with warning indicator)
+- **Kill Warning Level** - Configure when to show warnings before terminating processes (None, High Risk Only, All Ports)
+- **Show New Process Badges** - Display lightning bolt (⚡) on processes started within the last 5 minutes
+- **Enable Port History Tracking** - Track port usage history to identify long-running vs temporary services (disabled by default)
 - **Launch at Login** - Automatically start OpenPorts when you log in
 
 ## Requirements
@@ -160,13 +186,15 @@ swift test
 
 **Test Coverage:**
 - PortScanner integration tests (actual `lsof` scanning)
-- ProcessResolver integration tests  
+- ProcessResolver integration tests
 - PortInfo model tests (creation, equality, system detection)
 - PortScanResult tests (success/failure scenarios)
 - Core initialization tests
+- PortSafetyAnalyzer tests (safety level detection for critical, important, user-created ports)
+- Safety icon and color tests
 
 **Test Results:**
-- 18 tests total
+- 32 tests total
 - All passing (0 failures)
 - Real integration testing of actual functionality
 
