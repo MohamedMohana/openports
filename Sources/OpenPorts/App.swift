@@ -55,15 +55,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Set initial preferences
         UserDefaults.standard.register(defaults: [
-            "refreshInterval": 5.0,
+            "refreshInterval": 0.0,
             "showSystemProcesses": true,
             "groupPorts": false
         ])
         
-        // Start auto-refresh timer
-        menuViewModel.updateRefreshInterval()
-        
-        // Now trigger the first refresh
+        // Now trigger the first refresh (manual only - no auto-refresh)
         menuViewModel.refreshPorts()
         
         print("OpenPorts started successfully")

@@ -19,14 +19,9 @@ class MenuViewModel: ObservableObject {
     private let portScanner: PortScanner
     private let processResolver: ProcessResolver
     private let processManager: ProcessManager
-    private var refreshTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
     
     private let userDefaults = UserDefaults.standard
-    private var refreshInterval: Double {
-        get { userDefaults.double(forKey: "refreshInterval") }
-        set { userDefaults.set(newValue, forKey: "refreshInterval") }
-    }
     private var showSystemProcesses: Bool {
         get { userDefaults.bool(forKey: "showSystemProcesses") }
         set { userDefaults.set(newValue, forKey: "showSystemProcesses") }
@@ -77,7 +72,6 @@ class MenuViewModel: ObservableObject {
     }
     
     func refreshPorts() {
-        AppLogger.shared.log("refreshPorts() called from: \(Thread.callStackSymbols[1])")
         guard !isLoading else {
             AppLogger.shared.log("Already loading, skipping refresh")
             return
@@ -130,32 +124,6 @@ class MenuViewModel: ObservableObject {
         }
     }
     
-    private func startTimer() {
-        AppLogger.shared.log("startTimer() called, current timer: \(refreshTimer != nil)")
-        invalidateTimer()
-        
-        guard refreshInterval > 0 else {
-            AppLogger.shared.log("Auto-refresh disabled (interval: \(refreshInterval))")
-            return
-        }
-        
-        AppLogger.shared.log("Starting refresh timer with interval: \(refreshInterval) seconds")
-        refreshTimer = Timer.scheduledTimer(
-            withTimeInterval: refreshInterval,
-            repeats: true
-        ) { [weak self] _ in
-            Task { @MainActor in
-                AppLogger.shared.log("Timer fired, calling refreshPorts()")
-                self?.refreshPorts()
-            }
-        }
-    }
-    
-    private func invalidateTimer() {
-        refreshTimer?.invalidate()
-        refreshTimer = nil
-    }
-    
     private func updateMenu() {
         guard let statusItemController = statusItemController else {
             AppLogger.shared.log("statusItemController is nil, cannot update menu")
@@ -174,11 +142,6 @@ class MenuViewModel: ObservableObject {
 
         statusItemController.updateMenu(descriptor)
         AppLogger.shared.log("Menu updated successfully")
-    }
-    
-    func updateRefreshInterval() {
-        AppLogger.shared.log("updateRefreshInterval() called, interval: \(refreshInterval)")
-        startTimer()
     }
     
     func toggleShowSystemProcesses() {
