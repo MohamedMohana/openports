@@ -37,10 +37,12 @@ OpenPorts is a lightweight macOS menu bar application that displays which local 
 
 ## Features
 
-- 📊 **Real-time Port Monitoring** - Auto-refreshes every 3-5 seconds (configurable)
+- 🎨 **Port Categorization** - Automatically categorizes ports by type (Development, Database, System, etc.) with colorful icons
+- 📂 **Project Name Detection** - Detects and displays project names for development tools (Python, Node.js, etc.)
+- 🔧 **Technology Detection** - Shows specific technology being used (Python, Node.js, PostgreSQL, Docker, etc.)
+- 📊 **Category Grouping** - Option to group ports by category for organized view
 - 🔍 **Process Information** - Shows PID, process name, app name, bundle identifier, and executable path
-- ⚙️ **Flexible Refresh** - Auto-refresh or manual refresh on menu click
-- 🔧 **Preferences** - Configure refresh interval, grouping, and display options
+- ⚙️ **Flexible Refresh** - Manual refresh (default) or configurable auto-refresh
 - 🚫 **Process Termination** - Graceful terminate (SIGTERM) or force kill (SIGKILL)
 - 🛡️ **Safety Features** - Admin elevation check for non-owned processes, system process warnings
 - 🔎 **Search & Filter** - Quickly find ports by number, process, or app name
@@ -90,10 +92,16 @@ open OpenPorts.app
 ## Usage
 
 1. **View Ports** - Click the OpenPorts icon in the menu bar to see all open listening ports
-2. **Refresh** - Click "Refresh" in the menu or click the menu bar icon (if configured)
-3. **Filter** - Use the search field to filter by port number, process name, or app name
-4. **Terminate Process** - Right-click a port entry and select "Terminate" or "Force Kill"
-5. **Preferences** - Access preferences from the menu to configure refresh interval and other settings
+2. **Categorized View** - Ports are automatically categorized with colorful icons (💻 Development, 🗄️ Database, etc.)
+3. **View Details** - Click any port to see:
+   - Category (e.g., 💻 Development)
+   - Technology (e.g., Python, Node.js)
+   - Project name (if detected, e.g., "survey-kku")
+   - Process name and ID
+4. **Refresh** - Press "Refresh" (or `R`) to update the port list
+5. **Group by Category** - Enable in Preferences to organize ports by type
+6. **Terminate Process** - From the port submenu, select "Terminate" or "Force Kill"
+7. **Preferences** - Access preferences to configure display options
 
 ## Configuration
 
@@ -101,7 +109,8 @@ OpenPorts stores preferences in `~/Library/Containers/com.mohamedmohana.openport
 
 ### Preferences
 
-- **Refresh Interval** - Manual, 3s, 5s, 10s, or 30s
+- **Refresh Interval** - Manual (default) or 3s, 5s, 10s, 30s
+- **Group by Category** - Group ports by category (Development, Database, System, etc.) for organized view
 - **Group by App** - Group ports by application instead of listing all processes
 - **Show System Processes** - Show/hide system processes (marked with warning indicator)
 - **Launch at Login** - Automatically start OpenPorts when you log in
