@@ -57,6 +57,16 @@ brew install --cask MohamedMohana/tap/openports
 open -a OpenPorts
 ```
 
+#### Updating
+
+When a new version is released, update with:
+
+```bash
+brew update && brew upgrade --cask MohamedMohana/tap/openports
+```
+
+> **Important:** Always run `brew update` first to ensure Homebrew has the latest tap information before upgrading.
+
 > **Note:** Auto-updates have been temporarily removed. Updates will be available through Homebrew (`brew upgrade --cask MohamedMohana/tap/openports`) until we establish proper Apple Developer credentials for notarization.
 
 ### Manual Installation
