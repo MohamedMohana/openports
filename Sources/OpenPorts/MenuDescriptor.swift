@@ -28,15 +28,16 @@ enum MenuEntry {
     case button(String, action: () -> Void)
     case refreshButton
     case viewLogsButton
-}
+                    let menuItem = NSMenuItem(title: "View Logs", action: #selector(StatusItemController.viewLogs), keyEquivalent: "")
+                    menuItem.target = self
+                    menu?.addItem(menuItem)
 
-enum MenuEntryStyle {
-    case header
-    case primary
-    case secondary
-    case warning
-    case system
-}
+                case .preferencesButton:
+                    let menuItem = NSMenuItem(title: "Preferences...", action: #selector(StatusItemController.showPreferences), keyEquivalent: ",")
+                    menuItem.target = self
+                    menu?.addItem(menuItem)
+            }
+        }
 
 /// Descriptor for menu structure.
 /// Separates data structure from presentation for testability.

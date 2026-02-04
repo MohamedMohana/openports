@@ -10,7 +10,7 @@ final class StatusItemController {
     init() {
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
-        // Configure the status item
+        // Configure status item
         statusItem.button?.image = NSImage(systemSymbolName: "network", accessibilityDescription: "Network ports")
         statusItem.button?.imageScaling = .scaleNone
         
@@ -81,11 +81,16 @@ final class StatusItemController {
                     let menuItem = NSMenuItem(title: "View Logs", action: #selector(StatusItemController.viewLogs), keyEquivalent: "")
                     menuItem.target = self
                     menu?.addItem(menuItem)
+
+                case .preferencesButton:
+                    let menuItem = NSMenuItem(title: "Preferences...", action: #selector(StatusItemController.showPreferences), keyEquivalent: ",")
+                    menuItem.target = self
+                    menu?.addItem(menuItem)
                 }
             }
         }
         
-        // Add quit button at the end
+        // Add the quit button at the end
         menu?.addItem(NSMenuItem.separator())
         
         let quitItem = NSMenuItem(
@@ -146,7 +151,7 @@ final class StatusItemController {
         pidItem.isEnabled = false
         submenu.addItem(pidItem)
 
-        // Add divider
+        // Add a divider
         submenu.addItem(NSMenuItem.separator())
 
         // Add termination options
@@ -203,10 +208,10 @@ final class StatusItemController {
     @objc private func quit() {
         NSApplication.shared.terminate(nil)
     }
-    
+
     @objc private func viewLogs() {
         let logs = AppLogger.shared.getLogsText()
-        
+
         // Create a simple alert to show logs
         let alert = NSAlert()
         alert.messageText = "OpenPorts Debug Logs"
@@ -215,9 +220,9 @@ final class StatusItemController {
         alert.addButton(withTitle: "Copy to Clipboard")
         alert.addButton(withTitle: "Close")
         alert.addButton(withTitle: "Clear Logs")
-        
+
         let response = alert.runModal()
-        
+
         switch response {
         case .alertFirstButtonReturn:
             // Copy to clipboard
@@ -230,6 +235,15 @@ final class StatusItemController {
             break
         }
     }
+
+    @objc private func showPreferences() {
+        let alert = NSAlert()
+        alert.messageText = "Preferences"
+        alert.informativeText = "Preferences window will be implemented in v1.1.3"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
 }
 
 // Notification names
@@ -237,4 +251,5 @@ extension Notification.Name {
     static let refreshPorts = Notification.Name("com.mohamedmohana.openports.refreshPorts")
     static let terminatePort = Notification.Name("com.mohamedmohana.openports.terminatePort")
     static let forceKill = Notification.Name("com.mohamedmohana.openports.forceKill")
+    static let showPreferences = Notification.Name("com.mohamedmohana.openports.showPreferences")
 }
