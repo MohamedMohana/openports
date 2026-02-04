@@ -19,6 +19,7 @@ class MenuViewModel: ObservableObject {
     private let portScanner: PortScanner
     private let processResolver: ProcessResolver
     private let processManager: ProcessManager
+    private let portInfoEnhancer: PortInfoEnhancer
     private var cancellables = Set<AnyCancellable>()
     
     private let userDefaults = UserDefaults.standard
@@ -41,6 +42,7 @@ class MenuViewModel: ObservableObject {
         self.portScanner = portScanner
         self.processResolver = processResolver
         self.processManager = processManager
+        self.portInfoEnhancer = PortInfoEnhancer()
 
         setupNotifications()
         // Note: Initial refresh is triggered by AppDelegate after statusItemController is set
@@ -86,6 +88,8 @@ class MenuViewModel: ObservableObject {
         lastError = nil
 
         Task {
+            let enhancer = PortInfoEnhancer()
+
             AppLogger.shared.log("Calling portScanner.scanOpenPorts()")
             let result = await portScanner.scanOpenPorts()
             AppLogger.shared.log("Port scanner result - success: \(result.success), ports count: \(result.ports.count)")
@@ -95,8 +99,12 @@ class MenuViewModel: ObservableObject {
                 let resolvedPorts = await processResolver.resolveProcessInfo(for: result.ports)
                 AppLogger.shared.log("Process resolution complete, resolved ports count: \(resolvedPorts.count)")
 
+                AppLogger.shared.log("Enhancing ports with safety and metadata")
+                let enhancedPorts = await enhancer.enhance(resolvedPorts)
+                AppLogger.shared.log("Port enhancement complete, enhanced ports count: \(enhancedPorts.count)")
+
                 await MainActor.run {
-                    self.ports = resolvedPorts
+                    self.ports = enhancedPorts
                     self.lastError = nil
                     self.updateMenu()
                     self.isLoading = false
