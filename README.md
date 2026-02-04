@@ -111,20 +111,24 @@ open OpenPorts.app
 
 1. **View Ports** - Click the OpenPorts icon in the menu bar to see all open listening ports
 2. **Safety Ratings** - Each port shows a color-coded safety badge (🔴 Critical, 🟠 Important, 🟢 Optional, 🔵 User-Created) to help you decide whether to kill it
-3. **New Process Indicator** - Lightning bolt (⚡) appears on processes started within the last 5 minutes
-4. **Uptime Display** - See how long each process has been running in the port submenu
-5. **Categorized View** - Ports are automatically categorized with colorful icons (💻 Development, 🗄️ Database, etc.)
-6. **View Details** - Click any port to see:
+3. **Process Indicators** - Lightning bolt (⚡) appears on processes started within the last 5 minutes, and uptime display (5m, 1h, 2d) in port submenu
+4. **Categorized View** - Ports are automatically categorized with colorful icons (💻 Development, 🗄️ Database, etc.)
+5. **View Details** - Click any port to see:
     - Safety level (e.g., 🔵 User-Created)
     - Uptime (e.g., ⏱️ 5m)
     - Category (e.g., 💻 Development)
     - Technology (e.g., Python, Node.js)
     - Project name (if detected, e.g., "survey-kku")
     - Process name and ID
-7. **Refresh** - Press "Refresh" (or `R`) to update the port list
-8. **Group by Category** - Enable in Preferences to organize ports by type
+6. **Refresh** - Press "Refresh" (or `R`) to update the port list
+7. **Group by Category** - Enable in Preferences to organize ports by type (see all Python ports together, all Database ports together, etc.)
+8. **Open Preferences** - Click "Preferences..." (Cmd+, or from menu) to access all settings:
+    - Kill Warning Level: Choose when to show warnings before killing processes
+    - Show New Process Badges: Toggle ⚡ lightning bolt on new processes
+    - Enable Port History: Track port usage to identify long-running vs temporary services
+    - Group ports by category
 9. **Terminate Process** - From the port submenu, select "Terminate" or "Force Kill"
-10. **Preferences** - Access preferences to configure display options
+10. **Preferences** - Access preferences window for all configuration options
 
 ## Configuration
 
