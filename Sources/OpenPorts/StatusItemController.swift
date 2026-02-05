@@ -1,5 +1,6 @@
 import AppKit
 import OpenPortsCore
+import SwiftUI
 
 /// Controller for the menu bar status item.
 @MainActor
@@ -237,12 +238,21 @@ final class StatusItemController {
     }
 
     @objc private func showPreferences() {
-        let alert = NSAlert()
-        alert.messageText = "Preferences"
-        alert.informativeText = "Preferences window will be implemented in v1.1.3"
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
+        let hostingController = NSHostingController(rootView: PreferencesView())
+        
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 450, height: 500),
+            styleMask: [.titled, .closable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "OpenPorts Preferences"
+        window.contentViewController = hostingController
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.makeKeyAndOrderFront(nil)
+        
+        NSApp.activate(ignoringOtherApps: true)
     }
 }
 

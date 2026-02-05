@@ -6,6 +6,7 @@ struct PreferencesView: View {
     @AppStorage("groupPorts") private var groupPorts: Bool = false
     @AppStorage("showSystemProcesses") private var showSystemProcesses: Bool = true
     @AppStorage("groupByCategory") private var groupByCategory: Bool = false
+    @AppStorage("groupByProcess") private var groupByProcess: Bool = true
     @AppStorage("killWarningLevel") private var killWarningLevel: KillWarningLevel = .highRiskOnly
     @AppStorage("showNewProcessBadges") private var showNewProcessBadges: Bool = true
     @AppStorage("portHistoryEnabled") private var portHistoryEnabled: Bool = false
@@ -41,6 +42,10 @@ struct PreferencesView: View {
                 Toggle("Group ports by category", isOn: $groupByCategory)
                     .toggleStyle(.switch)
                     .help("Group ports by type (Development, Database, System, etc.) for organized view")
+
+                Toggle("Group ports by process", isOn: $groupByProcess)
+                    .toggleStyle(.switch)
+                    .help("Group ports by application/process name for organized view (shows headers like 'python', 'docker', etc.)")
 
                 Toggle("Show system processes", isOn: $showSystemProcesses)
                     .toggleStyle(.switch)
