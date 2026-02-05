@@ -28,19 +28,18 @@ enum MenuEntry {
     case button(String, action: () -> Void)
     case refreshButton
     case viewLogsButton
-                    let menuItem = NSMenuItem(title: "View Logs", action: #selector(StatusItemController.viewLogs), keyEquivalent: "")
-                    menuItem.target = self
-                    menu?.addItem(menuItem)
+    case preferencesButton
+}
 
-                case .preferencesButton:
-                    let menuItem = NSMenuItem(title: "Preferences...", action: #selector(StatusItemController.showPreferences), keyEquivalent: ",")
-                    menuItem.target = self
-                    menu?.addItem(menuItem)
-            }
-        }
+enum MenuEntryStyle {
+    case header
+    case primary
+    case secondary
+    case warning
+    case system
+}
 
 /// Descriptor for menu structure.
-/// Separates data structure from presentation for testability.
 struct MenuDescriptor {
     var sections: [MenuSection]
     
@@ -55,7 +54,8 @@ struct MenuDescriptor {
         showSystemProcesses: Bool = true,
         errorMessage: String? = nil,
         isLoading: Bool = false,
-        groupByCategory: Bool = false
+        groupByCategory: Bool = false,
+        groupByProcess: Bool = false
     ) -> MenuDescriptor {
         var entries = [MenuEntry]()
         let categorizer = PortCategorizer()
@@ -91,7 +91,22 @@ struct MenuDescriptor {
                 entries.append(.text("\(filteredPorts.count) open port(s)", style: .header))
                 entries.append(.divider)
 
-                if groupByCategory {
+                if groupByProcess {
+                    let groupedPorts = categorizer.groupByProcess(filteredPorts)
+                    let sortedProcesses = groupedPorts.keys.sorted { $0 < $1 }
+
+                    for processName in sortedProcesses {
+                        if let portsInProcess = groupedPorts[processName] {
+                            entries.append(.text(processName, style: .header))
+                            entries.append(.divider)
+
+                            for port in portsInProcess.sorted(by: { $0.port < $1.port }) {
+                                let categorized = categorizer.categorize(port)
+                                entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
+                            }
+                        }
+                    }
+                } else if groupByCategory {
                     // Group ports by category
                     let groupedPorts = categorizer.groupByCategory(filteredPorts)
                     let sortedCategories = groupedPorts.keys.sorted { $0.rawValue < $1.rawValue }
@@ -119,9 +134,9 @@ struct MenuDescriptor {
             }
         }
 
-        // Add view logs button
         entries.append(.divider)
         entries.append(.viewLogsButton)
+        entries.append(.preferencesButton)
 
         return MenuDescriptor(sections: [MenuSection(entries: entries)])
     }

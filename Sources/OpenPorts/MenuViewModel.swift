@@ -31,6 +31,10 @@ class MenuViewModel: ObservableObject {
         get { userDefaults.bool(forKey: "groupByCategory") }
         set { userDefaults.set(newValue, forKey: "groupByCategory") }
     }
+    private var groupByProcess: Bool {
+        get { userDefaults.bool(forKey: "groupByProcess") }
+        set { userDefaults.set(newValue, forKey: "groupByProcess") }
+    }
     
     var statusItemController: StatusItemController?
     
@@ -150,7 +154,8 @@ class MenuViewModel: ObservableObject {
             showSystemProcesses: showSystemProcesses,
             errorMessage: lastError,
             isLoading: isLoading,
-            groupByCategory: groupByCategory
+            groupByCategory: groupByCategory,
+            groupByProcess: groupByProcess
         )
 
         statusItemController.updateMenu(descriptor)

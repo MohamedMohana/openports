@@ -304,4 +304,19 @@ public class PortCategorizer {
         
         return grouped
     }
+    
+    /// Group ports by process/app name
+    public func groupByProcess(_ ports: [PortInfo]) -> [String: [PortInfo]] {
+        var grouped: [String: [PortInfo]] = [:]
+        
+        for port in ports {
+            let processName = port.displayName.isEmpty ? port.processName : port.displayName
+            if grouped[processName] == nil {
+                grouped[processName] = []
+            }
+            grouped[processName]?.append(port)
+        }
+        
+        return grouped
+    }
 }

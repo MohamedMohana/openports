@@ -58,7 +58,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             "refreshInterval": 0.0,
             "showSystemProcesses": true,
             "groupPorts": false,
-            "groupByCategory": false
+            "groupByCategory": false,
+            "groupByProcess": false
         ])
         
         // Now trigger the first refresh (manual only - no auto-refresh)
