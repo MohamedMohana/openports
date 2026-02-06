@@ -261,7 +261,7 @@ struct PreferencesView: View {
             }
             .padding(20)
         }
-        .frame(width: 520)
+        .frame(minWidth: 520, idealWidth: 520, minHeight: 600)
         .onAppear {
             launchAtLoginEnabled = LaunchAtLoginManager.isEnabled
         }
