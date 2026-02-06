@@ -2,15 +2,35 @@ import SwiftUI
 import OpenPortsCore
 
 struct PreferencesView: View {
-    @AppStorage("refreshInterval") private var refreshInterval: Double = 5
-    @AppStorage("groupPorts") private var groupPorts: Bool = false
-    @AppStorage("showSystemProcesses") private var showSystemProcesses: Bool = true
-    @AppStorage("groupByCategory") private var groupByCategory: Bool = false
-    @AppStorage("groupByProcess") private var groupByProcess: Bool = true
-    @AppStorage("killWarningLevel") private var killWarningLevel: KillWarningLevel = .highRiskOnly
-    @AppStorage("showNewProcessBadges") private var showNewProcessBadges: Bool = true
-    @AppStorage("portHistoryEnabled") private var portHistoryEnabled: Bool = false
+    @AppStorage("refreshInterval") private var refreshInterval: Double = 5 {
+        didSet { postPreferenceChange(key: "refreshInterval") }
+    }
+    @AppStorage("groupPorts") private var groupPorts: Bool = false {
+        didSet { postPreferenceChange(key: "groupPorts") }
+    }
+    @AppStorage("showSystemProcesses") private var showSystemProcesses: Bool = true {
+        didSet { postPreferenceChange(key: "showSystemProcesses") }
+    }
+    @AppStorage("groupByCategory") private var groupByCategory: Bool = false {
+        didSet { postPreferenceChange(key: "groupByCategory") }
+    }
+    @AppStorage("groupByProcess") private var groupByProcess: Bool = true {
+        didSet { postPreferenceChange(key: "groupByProcess") }
+    }
+    @AppStorage("killWarningLevel") private var killWarningLevel: KillWarningLevel = .highRiskOnly {
+        didSet { postPreferenceChange(key: "killWarningLevel") }
+    }
+    @AppStorage("showNewProcessBadges") private var showNewProcessBadges: Bool = true {
+        didSet { postPreferenceChange(key: "showNewProcessBadges") }
+    }
+    @AppStorage("portHistoryEnabled") private var portHistoryEnabled: Bool = false {
+        didSet { postPreferenceChange(key: "portHistoryEnabled") }
+    }
     @State private var launchAtLoginEnabled: Bool = false
+    
+    private func postPreferenceChange(key: String) {
+        NotificationCenter.default.post(name: .preferenceChanged, object: key)
+    }
     
     var body: some View {
         VStack(spacing: 0) {

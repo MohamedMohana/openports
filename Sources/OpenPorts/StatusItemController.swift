@@ -263,4 +263,5 @@ extension Notification.Name {
     static let terminatePort = Notification.Name("com.mohamedmohana.openports.terminatePort")
     static let forceKill = Notification.Name("com.mohamedmohana.openports.forceKill")
     static let showPreferences = Notification.Name("com.mohamedmohana.openports.showPreferences")
+    static let preferenceChanged = Notification.Name("com.mohamedmohana.openports.preferenceChanged")
 }

@@ -80,7 +80,17 @@ class MenuViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // Observe UserDefaults changes to refresh menu when preferences change
+        // Observe preference changes from PreferencesView
+        NotificationCenter.default.publisher(for: .preferenceChanged)
+            .sink { [weak self] notification in
+                if let key = notification.object as? String {
+                    AppLogger.shared.log("Preference changed via notification: \(key)")
+                    self?.updateMenu()
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Observe UserDefaults changes as backup
         observeUserDefaultsChanges()
     }
     
