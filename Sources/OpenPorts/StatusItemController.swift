@@ -238,10 +238,11 @@ final class StatusItemController {
     }
 
     @objc private func showPreferences() {
-        let hostingController = NSHostingController(rootView: PreferencesView())
+        let prefsView = PreferencesView()
+        let hostingController = NSHostingController(rootView: prefsView)
         
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 750),
+            contentRect: NSRect(x: 0, y: 0, width: 520, height: 800),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
