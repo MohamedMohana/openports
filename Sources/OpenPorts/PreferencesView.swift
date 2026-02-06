@@ -34,7 +34,8 @@ struct PreferencesView: View {
             
             Divider()
             
-            ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                Color.clear.frame(height: 8)
                 VStack(alignment: .leading, spacing: 24) {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 8) {
@@ -243,6 +244,7 @@ struct PreferencesView: View {
                 }
                 .padding(.vertical, 20)
             }
+            .frame(maxHeight: .infinity)
             
             Divider()
             

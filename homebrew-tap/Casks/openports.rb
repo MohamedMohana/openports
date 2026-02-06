@@ -1,8 +1,8 @@
 cask "openports" do
-  version "1.1.5"
+  version "1.1.5-fix"
   sha256 :no_check
 
-  url "https://github.com/MohamedMohana/openports/releases/download/v#{version}/OpenPorts-v#{version}.zip",
+  url "https://github.com/MohamedMohana/openports/releases/download/v1.1.5-fix/OpenPorts-v1.1.5.zip",
       verified: "github.com/MohamedMohana/openports/"
   name "OpenPorts"
   desc "Lightweight macOS menu bar app for monitoring local ports and processes with safety ratings and Preferences UI"

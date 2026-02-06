@@ -242,7 +242,7 @@ final class StatusItemController {
         let hostingController = NSHostingController(rootView: prefsView)
         
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 550, height: 900),
+            contentRect: NSRect(x: 0, y: 0, width: 600, height: 800),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
