@@ -1,5 +1,5 @@
 cask "openports" do
-  version "1.1.2"
+  version "1.1.5"
   sha256 :no_check
 
   url "https://github.com/MohamedMohana/openports/releases/download/v#{version}/OpenPorts-v#{version}.zip",

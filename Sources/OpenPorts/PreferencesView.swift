@@ -36,9 +36,25 @@ struct PreferencesView: View {
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    SectionView(title: "Refresh Settings", icon: "arrow.clockwise") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(Color.blue)
+                                .frame(width: 20)
+                            Text("Refresh Settings")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Color.primary)
+                            Spacer()
+                        }
+                        .padding(.bottom, 4)
+                        
                         VStack(alignment: .leading, spacing: 12) {
-                            PreferenceRow(label: "Auto-refresh Interval") {
+                            HStack(spacing: 12) {
+                                Text("Auto-refresh Interval")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
                                 Picker("", selection: $refreshInterval) {
                                     Text("Manual").tag(0)
                                     Text("3 seconds").tag(3)
@@ -53,31 +69,75 @@ struct PreferencesView: View {
                             Text("When set to Manual, use the Refresh button in the menu or press ⌘R")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
-                                .padding(.leading, 20)
+                                .padding(.leading, 0)
                         }
                     }
                     
-                    SectionView(title: "View Options", icon: "list.bullet.rectangle") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "list.bullet.rectangle")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(Color.blue)
+                                .frame(width: 20)
+                            Text("View Options")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Color.primary)
+                            Spacer()
+                        }
+                        .padding(.bottom, 4)
+                        
                         VStack(alignment: .leading, spacing: 10) {
-                            PreferenceRow(label: "Group by process", icon: "app") {
+                            HStack(spacing: 12) {
+                                Image(systemName: "app")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.secondary)
+                                    .frame(width: 16)
+                                Text("Group by process")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
                                 Toggle("", isOn: $groupByProcess)
                                     .toggleStyle(.switch)
                             }
                             .help("Organize ports by application name (e.g., python, docker)")
                             
-                            PreferenceRow(label: "Group by category", icon: "folder") {
+                            HStack(spacing: 12) {
+                                Image(systemName: "folder")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.secondary)
+                                    .frame(width: 16)
+                                Text("Group by category")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
                                 Toggle("", isOn: $groupByCategory)
                                     .toggleStyle(.switch)
                             }
                             .help("Group by type: Development, Database, System, etc.")
                             
-                            PreferenceRow(label: "Group by app", icon: "square.grid.2x2") {
+                            HStack(spacing: 12) {
+                                Image(systemName: "square.grid.2x2")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.secondary)
+                                    .frame(width: 16)
+                                Text("Group by app")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
                                 Toggle("", isOn: $groupPorts)
                                     .toggleStyle(.switch)
                             }
                             .help("Alternative grouping method")
                             
-                            PreferenceRow(label: "Show system processes", icon: "gear") {
+                            HStack(spacing: 12) {
+                                Image(systemName: "gear")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.secondary)
+                                    .frame(width: 16)
+                                Text("Show system processes")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
                                 Toggle("", isOn: $showSystemProcesses)
                                     .toggleStyle(.switch)
                             }
@@ -85,9 +145,29 @@ struct PreferencesView: View {
                         }
                     }
                     
-                    SectionView(title: "Safety Settings", icon: "shield.lefthalf.filled") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "shield.lefthalf.filled")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(Color.blue)
+                                .frame(width: 20)
+                            Text("Safety Settings")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Color.primary)
+                            Spacer()
+                        }
+                        .padding(.bottom, 4)
+                        
                         VStack(alignment: .leading, spacing: 10) {
-                            PreferenceRow(label: "Kill warning level", icon: "exclamationmark.triangle") {
+                            HStack(spacing: 12) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.secondary)
+                                    .frame(width: 16)
+                                Text("Kill warning level")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
                                 Picker("", selection: $killWarningLevel) {
                                     Text("None").tag(KillWarningLevel.none)
                                     Text("High Risk Only").tag(KillWarningLevel.highRiskOnly)
@@ -98,7 +178,15 @@ struct PreferencesView: View {
                             }
                             .help("When to show confirmation before terminating a process")
                             
-                            PreferenceRow(label: "Show new process badges (⚡)", icon: "bolt") {
+                            HStack(spacing: 12) {
+                                Image(systemName: "bolt")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.secondary)
+                                    .frame(width: 16)
+                                Text("Show new process badges (⚡)")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
                                 Toggle("", isOn: $showNewProcessBadges)
                                     .toggleStyle(.switch)
                             }
@@ -106,15 +194,43 @@ struct PreferencesView: View {
                         }
                     }
                     
-                    SectionView(title: "Advanced", icon: "gearshape.2") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "gearshape.2")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(Color.blue)
+                                .frame(width: 20)
+                            Text("Advanced")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Color.primary)
+                            Spacer()
+                        }
+                        .padding(.bottom, 4)
+                        
                         VStack(alignment: .leading, spacing: 10) {
-                            PreferenceRow(label: "Port history tracking", icon: "clock.arrow.circlepath") {
+                            HStack(spacing: 12) {
+                                Image(systemName: "clock.arrow.circlepath")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.secondary)
+                                    .frame(width: 16)
+                                Text("Port history tracking")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
                                 Toggle("", isOn: $portHistoryEnabled)
                                     .toggleStyle(.switch)
                             }
                             .help("Track which ports are most frequently used")
                             
-                            PreferenceRow(label: "Launch at login", icon: "power") {
+                            HStack(spacing: 12) {
+                                Image(systemName: "power")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.secondary)
+                                    .frame(width: 16)
+                                Text("Launch at login")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
                                 Toggle("", isOn: $launchAtLoginEnabled)
                                     .toggleStyle(.switch)
                                     .onChange(of: launchAtLoginEnabled) { _, newValue in
@@ -165,68 +281,6 @@ struct PreferencesView: View {
     private func closeWindow() {
         if let window = NSApp.keyWindow {
             window.close()
-        }
-    }
-}
-
-struct SectionView: View {
-    let title: String
-    let icon: String
-    let content: any View
-    
-    init(title: String, icon: String, @ViewBuilder content: () -> some View) {
-        self.title = title
-        self.icon = icon
-        self.content = content()
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color.blue)
-                    .frame(width: 20)
-                Text(title)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Color.primary)
-                Spacer()
-            }
-            .padding(.bottom, 4)
-            
-            VStack(alignment: .leading, spacing: 8) {
-                AnyView(content)
-            }
-            .padding(.leading, 28)
-        }
-        .padding(.vertical, 4)
-    }
-}
-
-struct PreferenceRow: View {
-    let label: String
-    let icon: String?
-    let content: any View
-    
-    init(label: String, icon: String? = nil, @ViewBuilder content: () -> some View) {
-        self.label = label
-        self.icon = icon
-        self.content = content()
-    }
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            if let icon = icon {
-                Image(systemName: icon)
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color.secondary)
-                    .frame(width: 16)
-            }
-            Text(label)
-                .font(.system(size: 13))
-                .foregroundStyle(Color.primary)
-            Spacer()
-            AnyView(content)
         }
     }
 }
