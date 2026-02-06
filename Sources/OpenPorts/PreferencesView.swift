@@ -2,30 +2,14 @@ import SwiftUI
 import OpenPortsCore
 
 struct PreferencesView: View {
-    @AppStorage("refreshInterval") private var refreshInterval: Double = 5 {
-        didSet { postPreferenceChange(key: "refreshInterval") }
-    }
-    @AppStorage("groupPorts") private var groupPorts: Bool = false {
-        didSet { postPreferenceChange(key: "groupPorts") }
-    }
-    @AppStorage("showSystemProcesses") private var showSystemProcesses: Bool = true {
-        didSet { postPreferenceChange(key: "showSystemProcesses") }
-    }
-    @AppStorage("groupByCategory") private var groupByCategory: Bool = false {
-        didSet { postPreferenceChange(key: "groupByCategory") }
-    }
-    @AppStorage("groupByProcess") private var groupByProcess: Bool = true {
-        didSet { postPreferenceChange(key: "groupByProcess") }
-    }
-    @AppStorage("killWarningLevel") private var killWarningLevel: KillWarningLevel = .highRiskOnly {
-        didSet { postPreferenceChange(key: "killWarningLevel") }
-    }
-    @AppStorage("showNewProcessBadges") private var showNewProcessBadges: Bool = true {
-        didSet { postPreferenceChange(key: "showNewProcessBadges") }
-    }
-    @AppStorage("portHistoryEnabled") private var portHistoryEnabled: Bool = false {
-        didSet { postPreferenceChange(key: "portHistoryEnabled") }
-    }
+    @AppStorage("refreshInterval") private var refreshInterval: Double = 5
+    @AppStorage("groupPorts") private var groupPorts: Bool = false
+    @AppStorage("showSystemProcesses") private var showSystemProcesses: Bool = true
+    @AppStorage("groupByCategory") private var groupByCategory: Bool = false
+    @AppStorage("groupByProcess") private var groupByProcess: Bool = true
+    @AppStorage("killWarningLevel") private var killWarningLevel: KillWarningLevel = .highRiskOnly
+    @AppStorage("showNewProcessBadges") private var showNewProcessBadges: Bool = true
+    @AppStorage("portHistoryEnabled") private var portHistoryEnabled: Bool = false
     @State private var launchAtLoginEnabled: Bool = false
     
     private func postPreferenceChange(key: String) {
@@ -86,6 +70,9 @@ struct PreferencesView: View {
                                     }
                                     .pickerStyle(.menu)
                                     .frame(width: 140, alignment: .trailing)
+                                    .onChange(of: refreshInterval) { _, _ in
+                                        postPreferenceChange(key: "refreshInterval")
+                                    }
                                 }
                                 
                                 Text("When set to Manual, use the Refresh button in the menu or press ⌘R")
@@ -120,6 +107,9 @@ struct PreferencesView: View {
                                     Spacer()
                                     Toggle("", isOn: $groupByProcess)
                                         .toggleStyle(.switch)
+                                        .onChange(of: groupByProcess) { _, _ in
+                                            postPreferenceChange(key: "groupByProcess")
+                                        }
                                 }
                                 .help("Organize ports by application name (e.g., python, docker)")
                                 
@@ -134,6 +124,9 @@ struct PreferencesView: View {
                                     Spacer()
                                     Toggle("", isOn: $groupByCategory)
                                         .toggleStyle(.switch)
+                                        .onChange(of: groupByCategory) { _, _ in
+                                            postPreferenceChange(key: "groupByCategory")
+                                        }
                                 }
                                 .help("Group by type: Development, Database, System, etc.")
                                 
@@ -148,6 +141,9 @@ struct PreferencesView: View {
                                     Spacer()
                                     Toggle("", isOn: $groupPorts)
                                         .toggleStyle(.switch)
+                                        .onChange(of: groupPorts) { _, _ in
+                                            postPreferenceChange(key: "groupPorts")
+                                        }
                                 }
                                 .help("Alternative grouping method")
                                 
@@ -162,6 +158,9 @@ struct PreferencesView: View {
                                     Spacer()
                                     Toggle("", isOn: $showSystemProcesses)
                                         .toggleStyle(.switch)
+                                        .onChange(of: showSystemProcesses) { _, _ in
+                                            postPreferenceChange(key: "showSystemProcesses")
+                                        }
                                 }
                                 .help("Show or hide macOS system services")
                             }
@@ -197,6 +196,9 @@ struct PreferencesView: View {
                                     }
                                     .pickerStyle(.menu)
                                     .frame(width: 140, alignment: .trailing)
+                                    .onChange(of: killWarningLevel) { _, _ in
+                                        postPreferenceChange(key: "killWarningLevel")
+                                    }
                                 }
                                 .help("When to show confirmation before terminating a process")
                                 
@@ -211,6 +213,9 @@ struct PreferencesView: View {
                                     Spacer()
                                     Toggle("", isOn: $showNewProcessBadges)
                                         .toggleStyle(.switch)
+                                        .onChange(of: showNewProcessBadges) { _, _ in
+                                            postPreferenceChange(key: "showNewProcessBadges")
+                                        }
                                 }
                                 .help("Highlight processes started in the last 5 minutes")
                             }
@@ -241,6 +246,9 @@ struct PreferencesView: View {
                                     Spacer()
                                     Toggle("", isOn: $portHistoryEnabled)
                                         .toggleStyle(.switch)
+                                        .onChange(of: portHistoryEnabled) { _, _ in
+                                            postPreferenceChange(key: "portHistoryEnabled")
+                                        }
                                 }
                                 .help("Track which ports are most frequently used")
                                 
