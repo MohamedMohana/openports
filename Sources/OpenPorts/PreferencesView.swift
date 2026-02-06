@@ -34,215 +34,219 @@ struct PreferencesView: View {
             
             Divider()
             
-            VStack(alignment: .leading, spacing: 0) {
-                Color.clear.frame(height: 8)
-                VStack(alignment: .leading, spacing: 24) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(Color.blue)
-                                .frame(width: 20)
-                            Text("Refresh Settings")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Color.primary)
-                            Spacer()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Color.clear.frame(height: 8)
+                    VStack(alignment: .leading, spacing: 24) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Color.blue)
+                                    .frame(width: 20)
+                                Text("Refresh Settings")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
+                            }
+                            .padding(.bottom, 4)
+                            
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack(spacing: 12) {
+                                    Text("Auto-refresh Interval")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.primary)
+                                    Spacer()
+                                    Picker("", selection: $refreshInterval) {
+                                        Text("Manual").tag(0)
+                                        Text("3 seconds").tag(3)
+                                        Text("5 seconds").tag(5)
+                                        Text("10 seconds").tag(10)
+                                        Text("30 seconds").tag(30)
+                                    }
+                                    .pickerStyle(.menu)
+                                    .frame(width: 140, alignment: .trailing)
+                                }
+                                
+                                Text("When set to Manual, use the Refresh button in the menu or press ⌘R")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                                    .padding(.leading, 0)
+                            }
                         }
-                        .padding(.bottom, 4)
                         
                         VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 12) {
-                                Text("Auto-refresh Interval")
-                                    .font(.system(size: 13))
+                            HStack(spacing: 8) {
+                                Image(systemName: "list.bullet.rectangle")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Color.blue)
+                                    .frame(width: 20)
+                                Text("View Options")
+                                    .font(.system(size: 13, weight: .semibold))
                                     .foregroundStyle(Color.primary)
                                 Spacer()
-                                Picker("", selection: $refreshInterval) {
-                                    Text("Manual").tag(0)
-                                    Text("3 seconds").tag(3)
-                                    Text("5 seconds").tag(5)
-                                    Text("10 seconds").tag(10)
-                                    Text("30 seconds").tag(30)
+                            }
+                            .padding(.bottom, 4)
+                            
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "app")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.secondary)
+                                        .frame(width: 16)
+                                    Text("Group by process")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.primary)
+                                    Spacer()
+                                    Toggle("", isOn: $groupByProcess)
+                                        .toggleStyle(.switch)
                                 }
-                                .pickerStyle(.menu)
-                                .frame(width: 140, alignment: .trailing)
-                            }
-                            
-                            Text("When set to Manual, use the Refresh button in the menu or press ⌘R")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                                .padding(.leading, 0)
-                        }
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "list.bullet.rectangle")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(Color.blue)
-                                .frame(width: 20)
-                            Text("View Options")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Color.primary)
-                            Spacer()
-                        }
-                        .padding(.bottom, 4)
-                        
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "app")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.secondary)
-                                    .frame(width: 16)
-                                Text("Group by process")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.primary)
-                                Spacer()
-                                Toggle("", isOn: $groupByProcess)
-                                    .toggleStyle(.switch)
-                            }
-                            .help("Organize ports by application name (e.g., python, docker)")
-                            
-                            HStack(spacing: 12) {
-                                Image(systemName: "folder")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.secondary)
-                                    .frame(width: 16)
-                                Text("Group by category")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.primary)
-                                Spacer()
-                                Toggle("", isOn: $groupByCategory)
-                                    .toggleStyle(.switch)
-                            }
-                            .help("Group by type: Development, Database, System, etc.")
-                            
-                            HStack(spacing: 12) {
-                                Image(systemName: "square.grid.2x2")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.secondary)
-                                    .frame(width: 16)
-                                Text("Group by app")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.primary)
-                                Spacer()
-                                Toggle("", isOn: $groupPorts)
-                                    .toggleStyle(.switch)
-                            }
-                            .help("Alternative grouping method")
-                            
-                            HStack(spacing: 12) {
-                                Image(systemName: "gear")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.secondary)
-                                    .frame(width: 16)
-                                Text("Show system processes")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.primary)
-                                Spacer()
-                                Toggle("", isOn: $showSystemProcesses)
-                                    .toggleStyle(.switch)
-                            }
-                            .help("Show or hide macOS system services")
-                        }
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "shield.lefthalf.filled")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(Color.blue)
-                                .frame(width: 20)
-                            Text("Safety Settings")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Color.primary)
-                            Spacer()
-                        }
-                        .padding(.bottom, 4)
-                        
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "exclamationmark.triangle")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.secondary)
-                                    .frame(width: 16)
-                                Text("Kill warning level")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.primary)
-                                Spacer()
-                                Picker("", selection: $killWarningLevel) {
-                                    Text("None").tag(KillWarningLevel.none)
-                                    Text("High Risk Only").tag(KillWarningLevel.highRiskOnly)
-                                    Text("All Ports").tag(KillWarningLevel.all)
+                                .help("Organize ports by application name (e.g., python, docker)")
+                                
+                                HStack(spacing: 12) {
+                                    Image(systemName: "folder")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.secondary)
+                                        .frame(width: 16)
+                                    Text("Group by category")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.primary)
+                                    Spacer()
+                                    Toggle("", isOn: $groupByCategory)
+                                        .toggleStyle(.switch)
                                 }
-                                .pickerStyle(.menu)
-                                .frame(width: 140, alignment: .trailing)
+                                .help("Group by type: Development, Database, System, etc.")
+                                
+                                HStack(spacing: 12) {
+                                    Image(systemName: "square.grid.2x2")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.secondary)
+                                        .frame(width: 16)
+                                    Text("Group by app")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.primary)
+                                    Spacer()
+                                    Toggle("", isOn: $groupPorts)
+                                        .toggleStyle(.switch)
+                                }
+                                .help("Alternative grouping method")
+                                
+                                HStack(spacing: 12) {
+                                    Image(systemName: "gear")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.secondary)
+                                        .frame(width: 16)
+                                    Text("Show system processes")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.primary)
+                                    Spacer()
+                                    Toggle("", isOn: $showSystemProcesses)
+                                        .toggleStyle(.switch)
+                                }
+                                .help("Show or hide macOS system services")
                             }
-                            .help("When to show confirmation before terminating a process")
-                            
-                            HStack(spacing: 12) {
-                                Image(systemName: "bolt")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.secondary)
-                                    .frame(width: 16)
-                                Text("Show new process badges (⚡)")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.primary)
-                                Spacer()
-                                Toggle("", isOn: $showNewProcessBadges)
-                                    .toggleStyle(.switch)
-                            }
-                            .help("Highlight processes started in the last 5 minutes")
                         }
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "gearshape.2")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(Color.blue)
-                                .frame(width: 20)
-                            Text("Advanced")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Color.primary)
-                            Spacer()
-                        }
-                        .padding(.bottom, 4)
                         
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "clock.arrow.circlepath")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.secondary)
-                                    .frame(width: 16)
-                                Text("Port history tracking")
-                                    .font(.system(size: 13))
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "shield.lefthalf.filled")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Color.blue)
+                                    .frame(width: 20)
+                                Text("Safety Settings")
+                                    .font(.system(size: 13, weight: .semibold))
                                     .foregroundStyle(Color.primary)
                                 Spacer()
-                                Toggle("", isOn: $portHistoryEnabled)
-                                    .toggleStyle(.switch)
                             }
-                            .help("Track which ports are most frequently used")
+                            .padding(.bottom, 4)
                             
-                            HStack(spacing: 12) {
-                                Image(systemName: "power")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.secondary)
-                                    .frame(width: 16)
-                                Text("Launch at login")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.primary)
-                                Spacer()
-                                Toggle("", isOn: $launchAtLoginEnabled)
-                                    .toggleStyle(.switch)
-                                    .onChange(of: launchAtLoginEnabled) { _, newValue in
-                                        LaunchAtLoginManager.setEnabled(newValue)
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "exclamationmark.triangle")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.secondary)
+                                        .frame(width: 16)
+                                    Text("Kill warning level")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.primary)
+                                    Spacer()
+                                    Picker("", selection: $killWarningLevel) {
+                                        Text("None").tag(KillWarningLevel.none)
+                                        Text("High Risk Only").tag(KillWarningLevel.highRiskOnly)
+                                        Text("All Ports").tag(KillWarningLevel.all)
                                     }
+                                    .pickerStyle(.menu)
+                                    .frame(width: 140, alignment: .trailing)
+                                }
+                                .help("When to show confirmation before terminating a process")
+                                
+                                HStack(spacing: 12) {
+                                    Image(systemName: "bolt")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.secondary)
+                                        .frame(width: 16)
+                                    Text("Show new process badges (⚡)")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.primary)
+                                    Spacer()
+                                    Toggle("", isOn: $showNewProcessBadges)
+                                        .toggleStyle(.switch)
+                                }
+                                .help("Highlight processes started in the last 5 minutes")
                             }
-                            .help("Start OpenPorts automatically when you log in")
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "gearshape.2")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Color.blue)
+                                    .frame(width: 20)
+                                Text("Advanced")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
+                            }
+                            .padding(.bottom, 4)
+                            
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "clock.arrow.circlepath")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.secondary)
+                                        .frame(width: 16)
+                                    Text("Port history tracking")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.primary)
+                                    Spacer()
+                                    Toggle("", isOn: $portHistoryEnabled)
+                                        .toggleStyle(.switch)
+                                }
+                                .help("Track which ports are most frequently used")
+                                
+                                HStack(spacing: 12) {
+                                    Image(systemName: "power")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.secondary)
+                                        .frame(width: 16)
+                                    Text("Launch at login")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.primary)
+                                    Spacer()
+                                    Toggle("", isOn: $launchAtLoginEnabled)
+                                        .toggleStyle(.switch)
+                                        .onChange(of: launchAtLoginEnabled) { _, newValue in
+                                            LaunchAtLoginManager.setEnabled(newValue)
+                                        }
+                                }
+                                .help("Start OpenPorts automatically when you log in")
+                            }
                         }
                     }
+                    .padding(.vertical, 20)
                 }
-                .padding(.vertical, 20)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 20)
             }
             .frame(maxHeight: .infinity)
             
