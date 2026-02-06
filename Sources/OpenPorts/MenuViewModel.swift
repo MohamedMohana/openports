@@ -79,6 +79,37 @@ class MenuViewModel: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+        
+        // Observe UserDefaults changes to refresh menu when preferences change
+        observeUserDefaultsChanges()
+    }
+    
+    private func observeUserDefaultsChanges() {
+        // Observe UserDefaults changes to refresh menu when preferences change
+        let relevantKeys = Set([
+            "showSystemProcesses",
+            "groupByCategory",
+            "groupByProcess",
+            "refreshInterval",
+            "killWarningLevel",
+            "showNewProcessBadges",
+            "portHistoryEnabled"
+        ])
+        
+        NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+            .sink { [weak self] notification in
+                guard let userInfo = notification.userInfo else { return }
+                
+                // Find which key changed
+                for (key, _) in userInfo {
+                    if let keyString = key as? String, relevantKeys.contains(keyString) {
+                        AppLogger.shared.log("Preference changed: \(keyString), refreshing menu")
+                        self?.updateMenu()
+                        break
+                    }
+                }
+            }
+            .store(in: &cancellables)
     }
     
     func refreshPorts() {
