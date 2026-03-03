@@ -27,10 +27,12 @@ These are implemented and available in the app now:
 - Process details: PID, process name, app name/path when resolvable
 - Safety labels (critical, important, optional, user-created) with kill warnings
 - Port age and uptime indicators
+- Custom SwiftUI popover control center (replaces the old plain menu layout)
 - Grouping options in Preferences (by process / by category / by app)
 - Manual refresh and optional auto-refresh interval
 - Launch at login
 - Port row deduplication for cleaner menu output
+- Dedicated debug logs window with live updates and auto-scroll toggle
 - In-app updates panel in Preferences:
   - automatic update checks toggle
   - manual `Check for Updates`
@@ -66,7 +68,7 @@ brew install --cask MohamedMohana/tap/openports
 
 1. Launch OpenPorts (menu bar icon appears)
 2. Click icon to inspect current listening ports
-3. Use row submenu for PID, safety, uptime, and terminate actions
+3. Expand any port row to see PID, safety, uptime, path, and terminate actions
 4. Open `Preferences...` for grouping, refresh, and update settings
 
 ### Keyboard Shortcuts

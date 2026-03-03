@@ -31,10 +31,10 @@ struct PreferencesView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
-            Image(systemName: "network")
-                .font(.system(size: 26, weight: .semibold))
-                .foregroundStyle(.blue)
+            AppIconProvider.swiftUIImage(size: 36)
+                .resizable()
                 .frame(width: 36, height: 36)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("OpenPorts Preferences")
