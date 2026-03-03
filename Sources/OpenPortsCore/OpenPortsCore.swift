@@ -4,5 +4,5 @@ import Foundation
 // Contains platform-agnostic logic for port scanning, process resolution, and data models.
 
 public enum OpenPortsCore {
-    public static let version = "2.0.2"
+    public static let version = "2.0.3"
 }

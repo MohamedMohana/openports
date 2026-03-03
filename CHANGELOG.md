@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+No unreleased changes yet.
+
+## [2.0.3] - 2026-03-03
+
 ### Changed
 - Simplified menu row titles for faster scanning (safety, port/protocol, process, concise tags)
 - Added safety-based row coloring for higher-risk entries
