@@ -107,20 +107,15 @@ final class StatusItemController: NSObject {
                     menu?.addItem(NSMenuItem.separator())
 
                 case let .portRow(port, category, technology, projectName):
-                    let categoryIcon = category?.icon ?? ""
-                    let safetyIcon = port.safety?.icon ?? ""
-                    let processDisplayName = projectName ?? port.displayName
-                    let portTitle = [
-                        port.age.icon,
-                        categoryIcon,
-                        ":\(port.port) \(port.portProtocol.rawValue)",
-                        safetyIcon,
-                        processDisplayName,
-                    ]
-                    .filter { !$0.isEmpty }
-                    .joined(separator: " ")
+                    let portTitle = buildPortRowTitle(for: port, category: category, projectName: projectName)
 
                     let menuItem = NSMenuItem(title: portTitle, action: nil, keyEquivalent: "")
+                    if let rowColor = colorForPortRow(port) {
+                        menuItem.attributedTitle = NSAttributedString(
+                            string: portTitle,
+                            attributes: [.foregroundColor: rowColor],
+                        )
+                    }
                     menuItem.submenu = createPortMenu(for: port, category: category, technology: technology, projectName: projectName)
                     menu?.addItem(menuItem)
 
@@ -162,6 +157,15 @@ final class StatusItemController: NSObject {
     /// Create a submenu for a port row with kill options.
     private func createPortMenu(for port: PortInfo, category: PortCategory?, technology: String?, projectName: String?) -> NSMenu {
         let submenu = NSMenu()
+
+        let summaryItem = NSMenuItem(
+            title: "\(port.displayName) • :\(port.port) \(port.portProtocol.rawValue)",
+            action: nil,
+            keyEquivalent: "",
+        )
+        summaryItem.isEnabled = false
+        submenu.addItem(summaryItem)
+        submenu.addItem(NSMenuItem.separator())
 
         // Add safety level
         if let safety = port.safety {
@@ -208,6 +212,12 @@ final class StatusItemController: NSObject {
         processInfoItem.isEnabled = false
         submenu.addItem(processInfoItem)
 
+        if let executablePath = port.executablePath {
+            let pathItem = NSMenuItem(title: "Path: \(executablePath)", action: nil, keyEquivalent: "")
+            pathItem.isEnabled = false
+            submenu.addItem(pathItem)
+        }
+
         // Add PID
         let pidItem = NSMenuItem(title: "PID: \(port.pid)", action: nil, keyEquivalent: "")
         pidItem.isEnabled = false
@@ -217,7 +227,7 @@ final class StatusItemController: NSObject {
         submenu.addItem(NSMenuItem.separator())
 
         // Add termination options
-        let terminateTitle = port.isSystemProcess ? "⚠️ Terminate (System Process)" : "Terminate"
+        let terminateTitle = port.isSystemProcess ? "⚠️ Terminate Process (SIGTERM)" : "Terminate Process (SIGTERM)"
         let terminateItem = NSMenuItem(
             title: terminateTitle,
             action: #selector(StatusItemController.terminatePort(_:)),
@@ -227,7 +237,7 @@ final class StatusItemController: NSObject {
         terminateItem.representedObject = port.pid
         submenu.addItem(terminateItem)
 
-        let forceKillTitle = port.isSystemProcess ? "⚠️ Force Kill (System Process)" : "Force Kill"
+        let forceKillTitle = port.isSystemProcess ? "⚠️ Force Kill Process (SIGKILL)" : "Force Kill Process (SIGKILL)"
         let forceKillItem = NSMenuItem(
             title: forceKillTitle,
             action: #selector(StatusItemController.forceKill(_:)),
@@ -238,6 +248,49 @@ final class StatusItemController: NSObject {
         submenu.addItem(forceKillItem)
 
         return submenu
+    }
+
+    private func buildPortRowTitle(for port: PortInfo, category: PortCategory?, projectName: String?) -> String {
+        let safetyIcon = port.safety?.icon ?? (port.isSystemProcess ? "🔴" : "⚪")
+        var parts = [
+            safetyIcon,
+            ":\(port.port) \(port.portProtocol.rawValue)",
+            port.displayName,
+        ]
+
+        if port.isSystemProcess {
+            parts.append("[System]")
+        }
+
+        if category == .development, let projectName, shouldShowProjectTag(projectName, for: port) {
+            parts.append("[\(projectName)]")
+        }
+
+        parts.append(port.age.icon)
+        return parts.joined(separator: " ")
+    }
+
+    private func shouldShowProjectTag(_ projectName: String, for port: PortInfo) -> Bool {
+        let normalizedProject = projectName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let normalizedDisplay = port.displayName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return !normalizedProject.isEmpty && normalizedProject != normalizedDisplay
+    }
+
+    private func colorForPortRow(_ port: PortInfo) -> NSColor? {
+        if port.isSystemProcess {
+            return .systemRed
+        }
+
+        switch port.safety {
+        case .critical:
+            return .systemRed
+        case .important:
+            return .systemOrange
+        case .userCreated:
+            return .systemBlue
+        default:
+            return nil
+        }
     }
 
     @objc private func handleButtonTap(_: AnyObject) {
