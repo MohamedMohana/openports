@@ -10,35 +10,82 @@ jobs:
   lint:
     name: Lint and Format
     runs-on: macos-latest
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      
       - name: Install SwiftLint and SwiftFormat
         run: |
           brew install swiftlint swiftformat
-
+      
       - name: Clear SwiftFormat Cache
         run: rm -f /Users/runner/.swiftpm/swiftformat.cache.json
-        
-      - name: Install SwiftFormat
-        run: brew install swiftformat
-        
+      
       - name: Run SwiftFormat
         run: swiftformat Sources Tests
-
+      
       - name: Run SwiftLint
         run: swiftlint --lenient
+      
+      - name: Check for Changes
+        run: |
+          if ! git diff-files --quiet; then
+            echo "::error::Code formatting issues found. Please run 'swiftformat Sources Tests' locally."
+            git diff-files
+            exit 1
+          fi
 
   test:
-    name: Test
+    name: Build and Test
     runs-on: macos-latest
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: "6.0"
+      
       - name: Build
         run: swift build
-
-      - name: Test
+      
+      - name: Run Tests
         run: swift test
+      
+      - name: Upload Coverage
+        if: success()
+        run: echo "Tests passed! ✅"
+
+  build-test:
+    name: Test Build (ARM64)
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: "6.0"
+      
+      - name: Build Release
+        run: swift build -c release
+      
+      - name: Package App (Test)
+        run: |
+          chmod +x Scripts/package_app.sh
+          ./Scripts/package_app.sh release arm64
+          ls -lh .build/release/OpenPorts.app
+      
+      - name: Verify App
+        run: |
+          if [ -d ".build/release/OpenPorts.app" ]; then
+            echo "✅ App bundle created successfully"
+          else
+            echo "::error::App bundle not found"
+            exit 1
+          fi
