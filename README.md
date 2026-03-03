@@ -33,7 +33,7 @@
 
 ## 🎬 Demo
 
-> 🎥 **Screenshots coming soon** - Check back after v2.0 release!
+> Latest UI and behavior screenshots are included in current release notes.
 
 ## 🚀 Features
 
@@ -47,19 +47,16 @@
 | 🎨 **Smart Categories** | Auto-group by type: Development, Database, System, etc. |
 | 📂 **Project Detection** | See project names for dev servers (React apps, Django, etc.) |
 | 🔧 **Tech Stack Detection** | Identify Python, Node.js, PostgreSQL, Docker, and more |
-| 🔍 **Quick Search** | Filter ports by number, process, or app name |
+| 🧹 **Duplicate Cleanup** | Deduplicates repeated `lsof` rows for cleaner menus |
 | 🚀 **Launch at Login** | Start automatically when you log in |
 | 🌙 **Dark Mode** | Beautiful in both light and dark modes |
 
-### Pro Features (v2.0 Coming Soon)
+### Active Development (Lightweight)
 
-- 📊 Export to CSV, JSON, Markdown
-- 🔔 Smart notifications for new/closed ports
-- ⭐ Favorite ports for quick access
-- 🔗 Copy connection strings (postgres://, mongodb://, etc.)
-- ⌨️ Global keyboard shortcuts
-- 🔗 URL scheme automation (openports://kill?port=3000)
-- 📱 macOS Widgets
+- 📊 Reintroduce export actions (CSV/JSON/Markdown) with stable UX ([#4](https://github.com/MohamedMohana/openports/issues/4))
+- ⭐ Reintroduce favorites/watchlist without menu clutter ([#5](https://github.com/MohamedMohana/openports/issues/5))
+- 🔍 Add lightweight menu search/filter (no persistent background indexing) ([#6](https://github.com/MohamedMohana/openports/issues/6))
+- 🔔 Add opt-in smart notifications with conservative defaults ([#7](https://github.com/MohamedMohana/openports/issues/7))
 
 ### Safety Rating System
 
@@ -114,7 +111,6 @@ swift build -c release
 | Shortcut | Action |
 |----------|--------|
 | `⌘R` | Refresh port list |
-| `⌘F` | Search ports |
 | `⌘,` | Open preferences |
 | `⌘Q` | Quit OpenPorts |
 
@@ -176,22 +172,19 @@ OpenPorts stores preferences in `~/Library/Preferences/com.mohamedmohana.openpor
 
 ## 📊 Roadmap
 
-### v2.0 (Coming Soon)
-- [ ] Export to CSV/JSON/Markdown/PDF
-- [ ] Smart notifications for port changes
-- [ ] Port favorites/watchlist
-- [ ] Connection string copying
-- [ ] URL scheme automation
-- [ ] Shortcuts.app integration
-- [ ] Keyboard shortcuts customization
+### v2.0.x (Current Focus)
+- [x] Stabilize build, tests, and release pipeline
+- [x] Professional native preferences UX refresh
+- [x] Deduplicate repeated port rows in menu output
+- [ ] Export actions (CSV/JSON/Markdown) reintroduced behind stable UI ([#4](https://github.com/MohamedMohana/openports/issues/4))
+- [ ] Favorites/watchlist reintroduced with lightweight data model ([#5](https://github.com/MohamedMohana/openports/issues/5))
+- [ ] Add lightweight menu search/filter ([#6](https://github.com/MohamedMohana/openports/issues/6))
+- [ ] Opt-in notification settings with safe defaults ([#7](https://github.com/MohamedMohana/openports/issues/7))
 
-### v2.1 (Future)
-- [ ] UDP port support (currently TCP only)
-- [ ] Historical usage analytics
-- [ ] Bandwidth monitoring per port
-- [ ] CLI companion tool
-- [ ] macOS Widgets
-- [ ] Custom icon themes
+### Next (Only If Lightweight)
+- [ ] UDP listening port support (optional toggle)
+- [ ] CLI companion for quick terminal output
+- [ ] Historical usage summaries (local-only, bounded storage)
 
 ## 🤝 Contributing
 

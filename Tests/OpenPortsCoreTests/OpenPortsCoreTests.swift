@@ -1,5 +1,5 @@
-import XCTest
 @testable import OpenPortsCore
+import XCTest
 
 final class OpenPortsCoreTests: XCTestCase {
     func testCoreInitialization() {
