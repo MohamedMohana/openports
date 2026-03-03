@@ -1,319 +1,187 @@
-import SwiftUI
 import OpenPortsCore
+import SwiftUI
 
 struct PreferencesView: View {
-    @AppStorage("refreshInterval") private var refreshInterval: Double = 5
-    @AppStorage("groupPorts") private var groupPorts: Bool = false
-    @AppStorage("showSystemProcesses") private var showSystemProcesses: Bool = true
-    @AppStorage("groupByCategory") private var groupByCategory: Bool = false
-    @AppStorage("groupByProcess") private var groupByProcess: Bool = true
-    @AppStorage("killWarningLevel") private var killWarningLevel: KillWarningLevel = .highRiskOnly
-    @AppStorage("showNewProcessBadges") private var showNewProcessBadges: Bool = true
-    @AppStorage("portHistoryEnabled") private var portHistoryEnabled: Bool = false
-    @State private var launchAtLoginEnabled: Bool = false
-    
-    private func postPreferenceChange(key: String) {
-        NotificationCenter.default.post(name: .preferenceChanged, object: key)
-    }
-    
+    @AppStorage(AppSettingsKey.refreshInterval) private var refreshInterval = AppSettings.defaultRefreshInterval
+    @AppStorage(AppSettingsKey.groupPorts) private var groupPorts = AppSettings.defaultGroupPorts
+    @AppStorage(AppSettingsKey.showSystemProcesses) private var showSystemProcesses = AppSettings.defaultShowSystemProcesses
+    @AppStorage(AppSettingsKey.groupByCategory) private var groupByCategory = AppSettings.defaultGroupByCategory
+    @AppStorage(AppSettingsKey.groupByProcess) private var groupByProcess = AppSettings.defaultGroupByProcess
+    @AppStorage(AppSettingsKey.killWarningLevel) private var killWarningLevel = AppSettings.defaultKillWarningLevel
+    @AppStorage(AppSettingsKey.showNewProcessBadges) private var showNewProcessBadges = AppSettings.defaultShowNewProcessBadges
+    @AppStorage(AppSettingsKey.portHistoryEnabled) private var portHistoryEnabled = AppSettings.defaultPortHistoryEnabled
+
+    @State private var launchAtLoginEnabled = false
+
     var body: some View {
         VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Image(systemName: "network")
-                        .font(.system(size: 32))
-                        .foregroundStyle(Color.blue)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Preferences")
-                            .font(.system(size: 24, weight: .semibold))
-                        Text("OpenPorts v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.3")")
-                            .font(.system(size: 11))
-                            .foregroundStyle(Color.secondary)
-                    }
-                    .padding(.leading, 12)
-                    Spacer()
-                }
-                .padding(20)
-            }
-            
+            header
             Divider()
-            
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    Color.clear.frame(height: 8)
-                    VStack(alignment: .leading, spacing: 24) {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(Color.blue)
-                                    .frame(width: 20)
-                                Text("Refresh Settings")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(Color.primary)
-                                Spacer()
-                            }
-                            .padding(.bottom, 4)
-                            
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack(spacing: 12) {
-                                    Text("Auto-refresh Interval")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.primary)
-                                    Spacer()
-                                    Picker("", selection: $refreshInterval) {
-                                        Text("Manual").tag(0)
-                                        Text("3 seconds").tag(3)
-                                        Text("5 seconds").tag(5)
-                                        Text("10 seconds").tag(10)
-                                        Text("30 seconds").tag(30)
-                                    }
-                                    .pickerStyle(.menu)
-                                    .frame(width: 140, alignment: .trailing)
-                                    .onChange(of: refreshInterval) { _, _ in
-                                        postPreferenceChange(key: "refreshInterval")
-                                    }
-                                }
-                                
-                                Text("When set to Manual, use the Refresh button in the menu or press ⌘R")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.secondary)
-                                    .padding(.leading, 0)
-                            }
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "list.bullet.rectangle")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(Color.blue)
-                                    .frame(width: 20)
-                                Text("View Options")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(Color.primary)
-                                Spacer()
-                            }
-                            .padding(.bottom, 4)
-                            
-                            VStack(alignment: .leading, spacing: 10) {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "app")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.secondary)
-                                        .frame(width: 16)
-                                    Text("Group by process")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.primary)
-                                    Spacer()
-                                    Toggle("", isOn: $groupByProcess)
-                                        .toggleStyle(.switch)
-                                        .onChange(of: groupByProcess) { _, _ in
-                                            postPreferenceChange(key: "groupByProcess")
-                                        }
-                                }
-                                .help("Organize ports by application name (e.g., python, docker)")
-                                
-                                HStack(spacing: 12) {
-                                    Image(systemName: "folder")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.secondary)
-                                        .frame(width: 16)
-                                    Text("Group by category")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.primary)
-                                    Spacer()
-                                    Toggle("", isOn: $groupByCategory)
-                                        .toggleStyle(.switch)
-                                        .onChange(of: groupByCategory) { _, _ in
-                                            postPreferenceChange(key: "groupByCategory")
-                                        }
-                                }
-                                .help("Group by type: Development, Database, System, etc.")
-                                
-                                HStack(spacing: 12) {
-                                    Image(systemName: "square.grid.2x2")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.secondary)
-                                        .frame(width: 16)
-                                    Text("Group by app")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.primary)
-                                    Spacer()
-                                    Toggle("", isOn: $groupPorts)
-                                        .toggleStyle(.switch)
-                                        .onChange(of: groupPorts) { _, _ in
-                                            postPreferenceChange(key: "groupPorts")
-                                        }
-                                }
-                                .help("Alternative grouping method")
-                                
-                                HStack(spacing: 12) {
-                                    Image(systemName: "gear")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.secondary)
-                                        .frame(width: 16)
-                                    Text("Show system processes")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.primary)
-                                    Spacer()
-                                    Toggle("", isOn: $showSystemProcesses)
-                                        .toggleStyle(.switch)
-                                        .onChange(of: showSystemProcesses) { _, _ in
-                                            postPreferenceChange(key: "showSystemProcesses")
-                                        }
-                                }
-                                .help("Show or hide macOS system services")
-                            }
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "shield.lefthalf.filled")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(Color.blue)
-                                    .frame(width: 20)
-                                Text("Safety Settings")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(Color.primary)
-                                Spacer()
-                            }
-                            .padding(.bottom, 4)
-                            
-                            VStack(alignment: .leading, spacing: 10) {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "exclamationmark.triangle")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.secondary)
-                                        .frame(width: 16)
-                                    Text("Kill warning level")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.primary)
-                                    Spacer()
-                                    Picker("", selection: $killWarningLevel) {
-                                        Text("None").tag(KillWarningLevel.none)
-                                        Text("High Risk Only").tag(KillWarningLevel.highRiskOnly)
-                                        Text("All Ports").tag(KillWarningLevel.all)
-                                    }
-                                    .pickerStyle(.menu)
-                                    .frame(width: 140, alignment: .trailing)
-                                    .onChange(of: killWarningLevel) { _, _ in
-                                        postPreferenceChange(key: "killWarningLevel")
-                                    }
-                                }
-                                .help("When to show confirmation before terminating a process")
-                                
-                                HStack(spacing: 12) {
-                                    Image(systemName: "bolt")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.secondary)
-                                        .frame(width: 16)
-                                    Text("Show new process badges (⚡)")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.primary)
-                                    Spacer()
-                                    Toggle("", isOn: $showNewProcessBadges)
-                                        .toggleStyle(.switch)
-                                        .onChange(of: showNewProcessBadges) { _, _ in
-                                            postPreferenceChange(key: "showNewProcessBadges")
-                                        }
-                                }
-                                .help("Highlight processes started in the last 5 minutes")
-                            }
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "gearshape.2")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(Color.blue)
-                                    .frame(width: 20)
-                                Text("Advanced")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(Color.primary)
-                                Spacer()
-                            }
-                            .padding(.bottom, 4)
-                            
-                            VStack(alignment: .leading, spacing: 10) {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "clock.arrow.circlepath")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.secondary)
-                                        .frame(width: 16)
-                                    Text("Port history tracking")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.primary)
-                                    Spacer()
-                                    Toggle("", isOn: $portHistoryEnabled)
-                                        .toggleStyle(.switch)
-                                        .onChange(of: portHistoryEnabled) { _, _ in
-                                            postPreferenceChange(key: "portHistoryEnabled")
-                                        }
-                                }
-                                .help("Track which ports are most frequently used")
-                                
-                                HStack(spacing: 12) {
-                                    Image(systemName: "power")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.secondary)
-                                        .frame(width: 16)
-                                    Text("Launch at login")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Color.primary)
-                                    Spacer()
-                                    Toggle("", isOn: $launchAtLoginEnabled)
-                                        .toggleStyle(.switch)
-                                        .onChange(of: launchAtLoginEnabled) { _, newValue in
-                                            LaunchAtLoginManager.setEnabled(newValue)
-                                        }
-                                }
-                                .help("Start OpenPorts automatically when you log in")
-                            }
-                        }
-                    }
-                    .padding(.vertical, 20)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, 20)
-            }
-            .frame(maxHeight: .infinity)
-            
+            form
             Divider()
-            
-            HStack {
-                Spacer()
-                Button("Reset to Defaults") {
-                    resetToDefaults()
-                }
-                .controlSize(.large)
-                
-                Button("Done") {
-                    closeWindow()
-                }
-                .controlSize(.large)
-                .keyboardShortcut(.defaultAction)
-            }
-            .padding(20)
+            footer
         }
+        .frame(minWidth: 520, idealWidth: 560, minHeight: 520, idealHeight: 620)
         .onAppear {
             launchAtLoginEnabled = LaunchAtLoginManager.isEnabled
         }
     }
-    
-    private func resetToDefaults() {
-        refreshInterval = 0
-        groupPorts = false
-        showSystemProcesses = true
-        groupByCategory = false
-        groupByProcess = true
-        killWarningLevel = .highRiskOnly
-        showNewProcessBadges = true
-        portHistoryEnabled = false
-    }
-    
-    private func closeWindow() {
-        if let window = NSApp.keyWindow {
-            window.close()
+
+    private var header: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: "network")
+                .font(.system(size: 26, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: 36, height: 36)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("OpenPorts Preferences")
+                    .font(.title3.weight(.semibold))
+                Text(versionText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+    }
+
+    private var form: some View {
+        Form {
+            Section {
+                LabeledContent("Auto-refresh") {
+                    Picker("", selection: $refreshInterval) {
+                        Text("Manual").tag(0.0)
+                        Text("3 seconds").tag(3.0)
+                        Text("5 seconds").tag(5.0)
+                        Text("10 seconds").tag(10.0)
+                        Text("30 seconds").tag(30.0)
+                    }
+                    .labelsHidden()
+                    .frame(width: 150)
+                    .onChange(of: refreshInterval) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.refreshInterval)
+                    }
+                }
+
+                Toggle("Show system processes", isOn: $showSystemProcesses)
+                    .onChange(of: showSystemProcesses) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.showSystemProcesses)
+                    }
+
+                Toggle("Launch at login", isOn: $launchAtLoginEnabled)
+                    .onChange(of: launchAtLoginEnabled) { _, isEnabled in
+                        LaunchAtLoginManager.setEnabled(isEnabled)
+                    }
+            } header: {
+                Text("General")
+            } footer: {
+                Text("Use Manual refresh for the lowest background activity.")
+            }
+
+            Section {
+                Toggle("Group by process", isOn: $groupByProcess)
+                    .onChange(of: groupByProcess) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.groupByProcess)
+                    }
+
+                Toggle("Group by category", isOn: $groupByCategory)
+                    .onChange(of: groupByCategory) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.groupByCategory)
+                    }
+
+                Toggle("Group by app", isOn: $groupPorts)
+                    .onChange(of: groupPorts) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.groupPorts)
+                    }
+            } header: {
+                Text("Organization")
+            }
+
+            Section {
+                LabeledContent("Kill warning level") {
+                    Picker("", selection: $killWarningLevel) {
+                        Text("None").tag(KillWarningLevel.none)
+                        Text("High Risk Only").tag(KillWarningLevel.highRiskOnly)
+                        Text("All Ports").tag(KillWarningLevel.all)
+                    }
+                    .labelsHidden()
+                    .frame(width: 170)
+                    .onChange(of: killWarningLevel) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.killWarningLevel)
+                    }
+                }
+
+                Toggle("Show new process badges", isOn: $showNewProcessBadges)
+                    .onChange(of: showNewProcessBadges) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.showNewProcessBadges)
+                    }
+            } header: {
+                Text("Safety")
+            } footer: {
+                Text("High-risk warnings are recommended before terminating critical or important services.")
+            }
+
+            Section {
+                Toggle("Enable port history tracking", isOn: $portHistoryEnabled)
+                    .onChange(of: portHistoryEnabled) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.portHistoryEnabled)
+                    }
+            } header: {
+                Text("Advanced")
+            }
+        }
+        .formStyle(.grouped)
+        .padding(16)
+    }
+
+    private var footer: some View {
+        HStack {
+            Button("Reset to Defaults", role: .destructive) {
+                resetToDefaults()
+            }
+
+            Spacer()
+
+            Button("Done") {
+                closeWindow()
+            }
+            .keyboardShortcut(.defaultAction)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+    }
+
+    private var versionText: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        return "Version \(version) (\(build))"
+    }
+
+    private func postPreferenceChange(key: String) {
+        NotificationCenter.default.post(name: .preferenceChanged, object: key)
+    }
+
+    private func resetToDefaults() {
+        refreshInterval = AppSettings.defaultRefreshInterval
+        groupPorts = AppSettings.defaultGroupPorts
+        showSystemProcesses = AppSettings.defaultShowSystemProcesses
+        groupByCategory = AppSettings.defaultGroupByCategory
+        groupByProcess = AppSettings.defaultGroupByProcess
+        killWarningLevel = AppSettings.defaultKillWarningLevel
+        showNewProcessBadges = AppSettings.defaultShowNewProcessBadges
+        portHistoryEnabled = AppSettings.defaultPortHistoryEnabled
+        launchAtLoginEnabled = false
+        LaunchAtLoginManager.setEnabled(false)
+
+        for key in AppSettingsKey.trackedPreferenceKeys {
+            postPreferenceChange(key: key)
+        }
+    }
+
+    private func closeWindow() {
+        NSApp.keyWindow?.close()
     }
 }

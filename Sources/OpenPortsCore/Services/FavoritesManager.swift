@@ -1,17 +1,15 @@
-import Foundation
 import Combine
+import Foundation
 
 /// Manages port favorites
-public class FavoritesManager: ObservableObject {
+@MainActor
+public final class FavoritesManager: ObservableObject {
     public static let shared = FavoritesManager()
     
     private let defaults = UserDefaults.standard
     private let favoritesKey = "favoritePorts"
     
-    @Published private(set) favorites: Set<Int> = [] {
-        didSet {
-        }
-    }
+    @Published public private(set) var favorites: Set<Int> = []
     
     public init() {
         loadFavorites()

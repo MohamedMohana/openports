@@ -21,7 +21,6 @@ disabled_rules:
   - for_where
   - trailing_closure
   - nesting
-  - statement_level
   - colon
   - comma
   - control_statement

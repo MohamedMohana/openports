@@ -1,11 +1,11 @@
-import SwiftUI
 import AppKit
 import OpenPortsCore
+import SwiftUI
 
 @main
 struct OpenPortsApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    
+
     var body: some Scene {
         EmptyScene()
     }
@@ -26,26 +26,26 @@ struct EmptyScene: Scene {
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItemController: StatusItemController?
     private var menuViewModel: MenuViewModel?
-    
-    func applicationDidFinishLaunching(_ notification: Notification) {
+
+    func applicationDidFinishLaunching(_: Notification) {
         // Set up app to not show dock icon (menu bar only app)
         NSApp.setActivationPolicy(.accessory)
-        
+
         // Initialize the process manager
         let processManager = ProcessManager()
-        
+
         // Initialize the status item controller
         let statusItemController = StatusItemController()
         self.statusItemController = statusItemController
-        
+
         // Initialize the menu view model with dependencies
         let menuViewModel = MenuViewModel(
             portScanner: PortScanner(),
             processResolver: ProcessResolver(),
-            processManager: processManager
+            processManager: processManager,
         )
         self.menuViewModel = menuViewModel
-        
+
         // Connect the view model with the status item controller
         // IMPORTANT: This must happen BEFORE starting the refresh cycle
         menuViewModel.statusItemController = statusItemController
@@ -53,27 +53,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Show initial loading state immediately
         menuViewModel.updateMenuWithLoadingState()
 
-        // Set initial preferences
-        UserDefaults.standard.register(defaults: [
-            "refreshInterval": 0.0,
-            "showSystemProcesses": true,
-            "groupPorts": false,
-            "groupByCategory": false,
-            "groupByProcess": true
-        ])
-        
+        // Register initial defaults before loading user preferences.
+        AppSettings.registerDefaults()
+
         // Now trigger the first refresh (manual only - no auto-refresh)
         menuViewModel.refreshPorts()
-        
+
         print("OpenPorts started successfully")
     }
-    
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+
+    func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {
         // Keep the app running even when all windows are closed
-        return false
+        false
     }
-    
-    func applicationWillTerminate(_ notification: Notification) {
+
+    func applicationWillTerminate(_: Notification) {
         print("OpenPorts is terminating")
     }
 }

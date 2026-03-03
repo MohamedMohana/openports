@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 echo "Formatting code..."
-swiftformat Sources Tests
+swiftformat Sources/OpenPorts --lint
 
 echo "Linting code..."
 swiftlint --strict

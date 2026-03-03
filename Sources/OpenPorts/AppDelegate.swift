@@ -1,33 +1,34 @@
 import AppKit
-import SwiftUI
-import OpenPortsCore
+import Foundation
 
 extension AppDelegate {
-    func application(_ application: NSApplication, open url: URL) -> Bool {
+    func application(_: NSApplication, open url: URL) -> Bool {
         guard url.scheme == "openports" else { return true }
-        
-        switch url.host {
+
+        switch url.host?.lowercased() {
         case "refresh":
             NotificationCenter.default.post(name: .refreshPorts, object: nil)
-            
+
         case "kill":
-            if let port = Int(url.query ?? ""),
-               let force = url.query == "true" {
-                NotificationCenter.default.post(name: .forceKill, object: port)
-            } else {
-                NotificationCenter.default.post(name: .terminatePort, object: port)
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            let queryItems = components?.queryItems ?? []
+
+            guard
+                let portValue = queryItems.first(where: { $0.name == "port" })?.value,
+                let port = Int(portValue)
+            else {
+                return false
             }
-            
-        case "export":
-            NotificationCenter.default.post(name: .exportPorts, object: url.query)
-            
-        case "search":
-            NotificationCenter.default.post(name: .searchPorts, object: url.query)
-            
+
+            let forceValue = queryItems.first(where: { $0.name == "force" })?.value ?? "false"
+            let isForceKill = ["1", "true", "yes"].contains(forceValue.lowercased())
+            let notificationName: Notification.Name = isForceKill ? .forceKill : .terminatePort
+            NotificationCenter.default.post(name: notificationName, object: port)
+
         default:
             break
         }
-        
+
         return true
     }
 }

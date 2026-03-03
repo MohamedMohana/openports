@@ -9,7 +9,7 @@
 [![GitHub release](https://img.shields.io/github/release/MohamedMohana/openports.svg)](https://github.com/MohamedMohana/openports/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20Sonoma-lightgrey.svg)](https://www.apple.com/macos)
-[![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
+[![Swift](https://img.shields.io/badge/Swift-6.1-orange.svg)](https://swift.org)
 [![Stars](https://img.shields.io/github/stars/MohamedMohana/openports?style=social)](https://github.com/MohamedMohana/openports)
 
 [Features](#features) • [Installation](#installation) • [Usage](#usage) • [Contributing](#contributing)
@@ -19,6 +19,8 @@
 ---
 
 **OpenPorts** is a lightweight macOS menu bar application that helps developers monitor and manage open network ports. Unlike other tools, OpenPorts tells you **which ports are safe to close** and lets you **kill processes directly**.
+
+> **Stabilization Note (March 3, 2026):** `v2.0.1` focuses on build/CI reliability and polished native macOS UX. Experimental Phase 3 integrations are being reintroduced incrementally.
 
 ## ✨ Why OpenPorts?
 

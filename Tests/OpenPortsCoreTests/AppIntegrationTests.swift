@@ -7,9 +7,10 @@ final class AppIntegrationTests: XCTestCase {
         let scanner = PortScanner()
         let result = await scanner.scanOpenPorts()
         
-        // Verify scanner returns something (either success with ports or failure with error)
+        // In CI/local environments the number of listening ports can be zero.
+        // Validate result consistency instead of assuming a minimum count.
         if result.success {
-            XCTAssertFalse(result.ports.isEmpty, "Scanner should return at least one port")
+            XCTAssertNil(result.error, "Successful scans should not include an error")
         } else {
             XCTAssertNotNil(result.error, "Error message should be provided")
         }

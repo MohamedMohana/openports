@@ -4,29 +4,31 @@ import SwiftUI
 
 /// Controller for the menu bar status item.
 @MainActor
-final class StatusItemController {
-    let statusItem: NSStatusItem  // Changed from private to let (accessible to extension)
+final class StatusItemController: NSObject {
+    let statusItem: NSStatusItem
     private var menu: NSMenu?
-    
-    init() {
-        self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        
+    private var preferencesWindow: NSWindow?
+
+    override init() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        super.init()
+
         // Configure status item
         statusItem.button?.image = NSImage(systemSymbolName: "network", accessibilityDescription: "Network ports")
         statusItem.button?.imageScaling = .scaleNone
-        
+
         // Create the menu
-        self.menu = NSMenu()
+        menu = NSMenu()
         statusItem.menu = menu
     }
-    
+
     /// Update the status bar icon based on current port state
     func updateStatusIcon(ports: [PortInfo], hasWarnings: Bool) {
         let portCount = ports.count
-        
+
         // Determine icon state
         let (symbolName, color) = determineIconState(ports: ports, hasWarnings: hasWarnings)
-        
+
         // Update icon
         if let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil) {
             let coloredImage = tintImage(image, with: color)
@@ -34,54 +36,61 @@ final class StatusItemController {
             statusItem.button?.toolTip = "OpenPorts - \(portCount) port\(portCount == 1 ? "" : "s") active"
         }
     }
-    
+
     private func determineIconState(ports: [PortInfo], hasWarnings: Bool) -> (String, NSColor) {
+        if hasWarnings {
+            return ("exclamationmark.triangle.fill", .systemOrange)
+        }
+
         if ports.isEmpty {
             return ("network.slash", .systemGray)
         }
-        
+
         // Check for critical ports
         let hasCritical = ports.contains { $0.isSystemProcess || $0.safety == .critical }
         if hasCritical {
             return ("exclamationmark.shield.fill", .systemRed)
         }
-        
+
         // Check for new ports
         let hasNewPorts = ports.contains { $0.age == .brandNew || $0.age == .new }
         if hasNewPorts {
             return ("network.badge.shield.half.filled", .systemBlue)
         }
-        
+
         // All good
         return ("network", .systemGreen)
     }
-    
+
     private func tintImage(_ image: NSImage, with color: NSColor) -> NSImage {
-        let tintedImage = image.copy() as! NSImage
+        guard let tintedImage = image.copy() as? NSImage else {
+            return image
+        }
+
         tintedImage.lockFocus()
         color.set()
-        
+
         let imageRect = NSRect(origin: .zero, size: tintedImage.size)
         imageRect.fill(using: .sourceAtop)
-        
+
         tintedImage.unlockFocus()
         return tintedImage
     }
-    
+
     /// Update the menu with new descriptor data.
     func updateMenu(_ descriptor: MenuDescriptor) {
         menu?.removeAllItems()
-        
+
         for section in descriptor.sections {
             if let header = section.header {
                 let headerItem = NSMenuItem(title: header, action: nil, keyEquivalent: "")
                 headerItem.isEnabled = false
                 menu?.addItem(headerItem)
             }
-            
+
             for entry in section.entries {
                 switch entry {
-                case .text(let text, let style):
+                case let .text(text, style):
                     let menuItem = NSMenuItem(title: text, action: nil, keyEquivalent: "")
                     menuItem.isEnabled = false
                     switch style {
@@ -93,11 +102,11 @@ final class StatusItemController {
                         break
                     }
                     menu?.addItem(menuItem)
-                    
+
                 case .divider:
                     menu?.addItem(NSMenuItem.separator())
-                    
-                case .portRow(let port, let category, let technology, let projectName):
+
+                case let .portRow(port, category, technology, projectName):
                     var portTitle = ":\(port.port) \(port.portProtocol.rawValue)"
                     if let icon = category?.icon {
                         portTitle = "\(icon) \(portTitle)"
@@ -113,17 +122,17 @@ final class StatusItemController {
                     let menuItem = NSMenuItem(title: portTitle, action: nil, keyEquivalent: "")
                     menuItem.submenu = createPortMenu(for: port, category: category, technology: technology, projectName: projectName)
                     menu?.addItem(menuItem)
-                    
-                case .button(let title, _):
+
+                case let .button(title, _):
                     let menuItem = NSMenuItem(title: title, action: #selector(StatusItemController.handleButtonTap(_:)), keyEquivalent: "")
                     menuItem.target = self
                     menu?.addItem(menuItem)
-                    
+
                 case .refreshButton:
                     let menuItem = NSMenuItem(title: "Refresh", action: #selector(StatusItemController.refreshMenu), keyEquivalent: "r")
                     menuItem.target = self
                     menu?.addItem(menuItem)
-                    
+
                 case .viewLogsButton:
                     let menuItem = NSMenuItem(title: "View Logs", action: #selector(StatusItemController.viewLogs), keyEquivalent: "")
                     menuItem.target = self
@@ -136,19 +145,19 @@ final class StatusItemController {
                 }
             }
         }
-        
+
         // Add the quit button at the end
         menu?.addItem(NSMenuItem.separator())
-        
+
         let quitItem = NSMenuItem(
             title: "Quit OpenPorts",
             action: #selector(StatusItemController.quit),
-            keyEquivalent: "q"
+            keyEquivalent: "q",
         )
         quitItem.target = self
         menu?.addItem(quitItem)
     }
-    
+
     /// Create a submenu for a port row with kill options.
     private func createPortMenu(for port: PortInfo, category: PortCategory?, technology: String?, projectName: String?) -> NSMenu {
         let submenu = NSMenu()
@@ -173,21 +182,21 @@ final class StatusItemController {
         }
 
         // Add category info
-        if let category = category {
+        if let category {
             let categoryItem = NSMenuItem(title: "\(category.icon) Category: \(category.rawValue)", action: nil, keyEquivalent: "")
             categoryItem.isEnabled = false
             submenu.addItem(categoryItem)
         }
 
         // Add technology info
-        if let technology = technology {
+        if let technology {
             let techItem = NSMenuItem(title: "🔧 Technology: \(technology)", action: nil, keyEquivalent: "")
             techItem.isEnabled = false
             submenu.addItem(techItem)
         }
 
         // Add project name
-        if let projectName = projectName {
+        if let projectName {
             let projectItem = NSMenuItem(title: "📂 Project: \(projectName)", action: nil, keyEquivalent: "")
             projectItem.isEnabled = false
             submenu.addItem(projectItem)
@@ -211,7 +220,7 @@ final class StatusItemController {
         let terminateItem = NSMenuItem(
             title: terminateTitle,
             action: #selector(StatusItemController.terminatePort(_:)),
-            keyEquivalent: ""
+            keyEquivalent: "",
         )
         terminateItem.target = self
         terminateItem.representedObject = port.pid
@@ -221,7 +230,7 @@ final class StatusItemController {
         let forceKillItem = NSMenuItem(
             title: forceKillTitle,
             action: #selector(StatusItemController.forceKill(_:)),
-            keyEquivalent: ""
+            keyEquivalent: "",
         )
         forceKillItem.target = self
         forceKillItem.representedObject = port.pid
@@ -229,27 +238,27 @@ final class StatusItemController {
 
         return submenu
     }
-    
-    @objc private func handleButtonTap(_ sender: AnyObject) {
+
+    @objc private func handleButtonTap(_: AnyObject) {
         // Handle button taps
     }
-    
+
     @objc private func refreshMenu() {
         NotificationCenter.default.post(name: .refreshPorts, object: nil)
     }
-    
+
     @objc private func terminatePort(_ sender: AnyObject?) {
         if let pid = sender?.representedObject as? Int {
             NotificationCenter.default.post(name: .terminatePort, object: pid)
         }
     }
-    
+
     @objc private func forceKill(_ sender: AnyObject?) {
         if let pid = sender?.representedObject as? Int {
             NotificationCenter.default.post(name: .forceKill, object: pid)
         }
     }
-    
+
     @objc private func quit() {
         NSApplication.shared.terminate(nil)
     }
@@ -279,91 +288,43 @@ final class StatusItemController {
     }
 
     @objc private func showPreferences() {
-        let prefsView = PreferencesView()
-        let hostingController = NSHostingController(rootView: prefsView)
-        
+        if let preferencesWindow {
+            preferencesWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let hostingController = NSHostingController(rootView: PreferencesView())
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 600, height: 800),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            contentRect: NSRect(x: 0, y: 0, width: 560, height: 620),
+            styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
-            defer: false
+            defer: false,
         )
         window.title = "OpenPorts Preferences"
         window.contentViewController = hostingController
         window.center()
         window.isReleasedWhenClosed = false
+        window.delegate = self
         window.makeKeyAndOrderFront(nil)
-        
+
+        preferencesWindow = window
         NSApp.activate(ignoringOtherApps: true)
     }
 }
 
-// Notification names
+extension StatusItemController: NSWindowDelegate {
+    func windowWillClose(_ notification: Notification) {
+        if let window = notification.object as? NSWindow, window == preferencesWindow {
+            preferencesWindow = nil
+        }
+    }
+}
+
+/// Notification names
 extension Notification.Name {
     static let refreshPorts = Notification.Name("com.mohamedmohana.openports.refreshPorts")
     static let terminatePort = Notification.Name("com.mohamedmohana.openports.terminatePort")
     static let forceKill = Notification.Name("com.mohamedmohana.openports.forceKill")
-    static let showPreferences = Notification.Name("com.mohamedmohana.openports.showPreferences")
     static let preferenceChanged = Notification.Name("com.mohamedmohana.openports.preferenceChanged")
-}
-
-// MARK: - Export Menu Item
-    @objc private func exportPorts() {
-        let ports = currentPorts
-        let alert = NSAlert()
-        alert.messageText = "Export Ports"
-        alert.informativeText = "Choose export format for \(ports.count) port(s)"
-        alert.alertStyle = .informational
-        
-        alert.addButton(withTitle: "CSV")
-        alert.addButton(withTitle: "JSON")
-        alert.addButton(withTitle: "Markdown")
-        alert.addButton(withTitle: "Cancel")
-        
-        let response = alert.runModal()
-        
-        let format: ExportFormat
-        switch response {
-        case .alertFirstButtonReturn:
-            format = .csv
-        case .alertSecondButtonReturn:
-            format = .json
-        case .alertThirdButtonReturn:
-            format = .markdown
-        default:
-            return
-        }
-        
-        Task {
-            let exporter = PortExporter()
-            let content = await exporter.export(ports: ports, format: format)
-            
-            if let fileURL = await exporter.saveToFile(content, filename: "export", format: format) {
-                let savePanel = NSSavePanel()
-                savePanel.title = "Save Export"
-                savePanel.nameFieldStringValue = fileURL.lastPathComponent
-                savePanel.allowedContentTypes = [UTType(filenameExtension: format.fileExtension) ?? .data]
-                
-                savePanel.begin { response in
-                    if response == .OK, let destinationURL = savePanel.url {
-                        try? {
-                            try FileManager.default.copyItem(at: fileURL, to: destinationURL)
-                            NSWorkspace.shared.activateFileViewerSelecting([destinationURL])
-                        } catch {
-                            print("Export failed: \(error)")
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    // MARK: - Toggle Favorite
-    @objc private func toggleFavorite(_ sender: NSMenuItem) {
-        if let portNumber = sender.representedObject as? Int {
-            FavoritesManager.shared.toggle(portNumber)
-            // Refresh menu to update star
-            NotificationCenter.default.post(name: .refreshPorts, object: nil)
-        }
-    }
 }

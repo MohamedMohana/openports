@@ -3,240 +3,173 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
 
 jobs:
   build:
-    name: Build OpenPorts
+    name: Build and Package
     runs-on: macos-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - arch: arm64
-            target: arm64-apple-macosx
-          - arch: intel
-            target: x86_64-apple-macosx
-    
+          - package_arch: arm64
+            swift_arch: arm64
+          - package_arch: intel
+            swift_arch: x86_64
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Swift
         uses: swift-actions/setup-swift@v1
         with:
-          swift-version: "6.0"
-      
-      - name: Get Version
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      
+          swift-version: "6.1"
+
+      - name: Resolve Version
+        id: version
+        run: echo "value=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
       - name: Build Release
-        run: |
-          echo "Building for ${{ matrix.arch }}..."
-          swift build -c release --arch ${{ matrix.arch }}
-      
+        run: swift build -c release --arch "${{ matrix.swift_arch }}"
+
       - name: Package App
         run: |
           chmod +x Scripts/package_app.sh
-          ./Scripts/package_app.sh release ${{ matrix.arch }}
-      
-      - name: Create Distribution Archive
+          ./Scripts/package_app.sh release "${{ matrix.package_arch }}"
+
+      - name: Archive App
         run: |
-          cd .build/release
-          zip -r ../../../OpenPorts-${{ steps.get_version.VERSION }}-${{ matrix.arch }}.zip OpenPorts.app
-          cd ../../..
-      
-      - name: Generate SHA256
-        run: |
-          shasum -a 256 OpenPorts-${{ steps.get_version.VERSION }}-${{ matrix.arch }}.zip > OpenPorts-${{ steps.get_version.VERSION }}-${{ matrix.arch }}.sha256
-          echo "SHA256 for ${{ matrix.arch }}:"
-          cat OpenPorts-${{ steps.get_version.VERSION }}-${{ matrix.arch }}.sha256
-      
-      - name: Upload Artifact
+          zip -r "OpenPorts-${{ steps.version.outputs.value }}-${{ matrix.package_arch }}.zip" OpenPorts.app
+          shasum -a 256 "OpenPorts-${{ steps.version.outputs.value }}-${{ matrix.package_arch }}.zip" > "OpenPorts-${{ steps.version.outputs.value }}-${{ matrix.package_arch }}.sha256"
+
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: OpenPorts-${{ matrix.arch }}
+          name: OpenPorts-${{ matrix.package_arch }}
           path: |
-            OpenPorts-${{ steps.get_version.VERSION }}-${{ matrix.arch }}.zip
-            OpenPorts-${{ steps.get_version.VERSION }}-${{ matrix.arch }}.sha256
-          retention-days: 1
+            OpenPorts-${{ steps.version.outputs.value }}-${{ matrix.package_arch }}.zip
+            OpenPorts-${{ steps.version.outputs.value }}-${{ matrix.package_arch }}.sha256
+          retention-days: 3
 
   release:
-    name: Create Release
+    name: Publish GitHub Release
     needs: build
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Get Version
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      
+      - name: Resolve Version
+        id: version
+        run: echo "value=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
       - name: Download ARM64 Artifact
         uses: actions/download-artifact@v4
         with:
           name: OpenPorts-arm64
-          path: ./artifacts
-      
+          path: artifacts
+
       - name: Download Intel Artifact
         uses: actions/download-artifact@v4
         with:
           name: OpenPorts-intel
-          path: ./artifacts
-      
-      - name: Display Artifacts
+          path: artifacts
+
+      - name: Validate Artifacts
         run: |
-          echo "Downloaded artifacts:"
-          ls -lh ./artifacts/
-          echo ""
-          echo "SHA256 Checksums:"
-          cat ./artifacts/*.sha256
-      
+          ls -lh artifacts
+          test -f "artifacts/OpenPorts-${{ steps.version.outputs.value }}-arm64.zip"
+          test -f "artifacts/OpenPorts-${{ steps.version.outputs.value }}-intel.zip"
+          test -f "artifacts/OpenPorts-${{ steps.version.outputs.value }}-arm64.sha256"
+          test -f "artifacts/OpenPorts-${{ steps.version.outputs.value }}-intel.sha256"
+          cat artifacts/*.sha256
+
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          name: OpenPorts ${{ steps.get_version.VERSION }}
-          body: |
-            ## 🚀 OpenPorts ${{ steps.get_version.VERSION }}
-            
-            ### 📦 Downloads
-            
-            - **Apple Silicon (M1/M2/M3)**: `OpenPorts-${{ steps.get_version.VERSION }}-arm64.zip`
-            - **Intel Mac**: `OpenPorts-${{ steps.get_version.VERSION }}-intel.zip`
-            
-            ### 📥 Installation
-            
-            #### Homebrew (Recommended)
-            ```bash
-            brew install --cask MohamedMohana/tap/openports
-            ```
-            
-            #### Manual Installation
-            1. Download the appropriate ZIP file for your Mac
-            2. Extract `OpenPorts.app`
-            3. Drag to your `/Applications` folder
-            4. Launch from Applications or Spotlight
-            
-            ### 🔐 Security Note
-            
-            On first launch, you may see a Gatekeeper warning. This is expected for open-source projects without Apple Developer accounts.
-            
-            **To bypass:**
-            1. System Settings → Privacy & Security
-            2. Find "OpenPorts was blocked" → Click "Open Anyway"
-            
-            ### 📝 Changelog
-            
-            See [CHANGELOG.md](https://github.com/MohamedMohana/openports/blob/main/CHANGELOG.md) for details.
-            
-            ### 🙏 Contributing
-            
-            Found a bug or have a feature request? [Open an issue](https://github.com/MohamedMohana/openports/issues)!
-            
-          files: |
-            ./artifacts/OpenPorts-${{ steps.get_version.VERSION }}-arm64.zip
-            ./artifacts/OpenPorts-${{ steps.get_version.VERSION }}-intel.zip
-            ./artifacts/*.sha256
-          draft: false
-          prerelease: ${{ contains(steps.get_version.VERSION, '-') }}
+          name: OpenPorts ${{ steps.version.outputs.value }}
           generate_release_notes: true
-      
-      - name: Update Homebrew Tap
-        run: |
-          echo "SHA256 checksums for Homebrew Cask:"
-          echo ""
-          echo "ARM64:"
-          grep arm64 ./artifacts/*.sha256
-          echo ""
-          echo "Intel:"
-          grep intel ./artifacts/*.sha256
-          echo ""
-          echo "Update homebrew-tap/Casks/openports.rb with these checksums"
+          prerelease: ${{ contains(steps.version.outputs.value, '-') }}
+          files: |
+            artifacts/OpenPorts-${{ steps.version.outputs.value }}-arm64.zip
+            artifacts/OpenPorts-${{ steps.version.outputs.value }}-intel.zip
+            artifacts/OpenPorts-${{ steps.version.outputs.value }}-arm64.sha256
+            artifacts/OpenPorts-${{ steps.version.outputs.value }}-intel.sha256
 
   update-tap:
     name: Update Homebrew Tap
     needs: release
     runs-on: ubuntu-latest
-    if: github.repository == 'MohamedMohana/openports'
-    
+    if: github.repository == 'MohamedMohana/openports' && secrets.GH_TOKEN != ''
+
     steps:
-      - name: Checkout Main Repo
-        uses: actions/checkout@v4
-        
-      - name: Get Version
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      
+      - name: Resolve Version
+        id: version
+        run: echo "value=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: OpenPorts-*
-          path: ./artifacts
+          path: artifacts
           merge-multiple: true
-      
-      - name: Extract SHA256
-        id: sha256
+
+      - name: Extract Checksums
+        id: sha
         run: |
-          ARM64_SHA=$(awk '{print $1}' ./artifacts/*-arm64.sha256)
-          INTEL_SHA=$(awk '{print $1}' ./artifacts/*-intel.sha256)
-          echo "ARM64_SHA=${ARM64_SHA}" >> $GITHUB_OUTPUT
-          echo "INTEL_SHA=${INTEL_SHA}" >> $GITHUB_OUTPUT
-          echo "ARM64: ${ARM64_SHA}"
-          echo "Intel: ${INTEL_SHA}"
-      
-      - name: Checkout Homebrew Tap
+          ARM64_SHA=$(awk '{print $1}' artifacts/*-arm64.sha256)
+          INTEL_SHA=$(awk '{print $1}' artifacts/*-intel.sha256)
+          echo "arm64=${ARM64_SHA}" >> "$GITHUB_OUTPUT"
+          echo "intel=${INTEL_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout Tap Repo
         uses: actions/checkout@v4
         with:
           repository: MohamedMohana/homebrew-tap
           token: ${{ secrets.GH_TOKEN }}
-          path: homebrew-tap-repo
-      
-      - name: Update Cask File
+          path: tap
+
+      - name: Update Cask
         run: |
-          VERSION="${{ steps.get_version.VERSION }}"
-          ARM64_SHA="${{ steps.sha256.ARM64_SHA }}"
-          INTEL_SHA="${{ steps.sha256.INTEL_SHA }}"
-          
-          cat > homebrew-tap-repo/Casks/openports.rb << CASK
+          VERSION="${{ steps.version.outputs.value }}"
+          ARM64_SHA="${{ steps.sha.outputs.arm64 }}"
+          INTEL_SHA="${{ steps.sha.outputs.intel }}"
+
+          cat > tap/Casks/openports.rb <<EOF
           cask "openports" do
-            version "#{VERSION}"
-            
+            version "${VERSION}"
+
             on_arm do
-              url "https://github.com/MohamedMohana/openports/releases/download/#{VERSION}/OpenPorts-#{VERSION}-arm64.zip",
+              url "https://github.com/MohamedMohana/openports/releases/download/${VERSION}/OpenPorts-${VERSION}-arm64.zip",
                   verified: "github.com/MohamedMohana/openports/"
-              sha256 "#{ARM64_SHA}"
+              sha256 "${ARM64_SHA}"
             end
-            
+
             on_intel do
-              url "https://github.com/MohamedMohana/openports/releases/download/#{VERSION}/OpenPorts-#{VERSION}-intel.zip",
+              url "https://github.com/MohamedMohana/openports/releases/download/${VERSION}/OpenPorts-${VERSION}-intel.zip",
                   verified: "github.com/MohamedMohana/openports/"
-              sha256 "#{INTEL_SHA}"
+              sha256 "${INTEL_SHA}"
             end
-            
+
             name "OpenPorts"
-            desc "Smart port monitoring for Mac developers with safety ratings and real-time updates"
+            desc "Smart port monitoring for Mac developers"
             homepage "https://github.com/MohamedMohana/openports"
-            
+
             auto_updates false
             depends_on macos: ">= :sonoma"
-            
+
             app "OpenPorts.app"
           end
-          CASK
-          
-          echo "Updated Cask file:"
-          cat homebrew-tap-repo/Casks/openports.rb
-      
-      - name: Commit and Push to Tap
+          EOF
+
+      - name: Commit and Push Tap Changes
         run: |
-          cd homebrew-tap-repo
+          cd tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Casks/openports.rb
-          git commit -m "Update openports to ${{ steps.get_version.VERSION }}" || echo "No changes to commit"
+          git commit -m "Update openports to ${{ steps.version.outputs.value }}" || exit 0
           git push

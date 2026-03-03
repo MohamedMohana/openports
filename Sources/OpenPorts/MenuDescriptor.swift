@@ -13,7 +13,7 @@ public struct CategorizedPortDisplay {
 struct MenuSection {
     var header: String?
     var entries: [MenuEntry]
-    
+
     init(header: String? = nil, entries: [MenuEntry] = []) {
         self.header = header
         self.entries = entries
@@ -42,11 +42,11 @@ enum MenuEntryStyle {
 /// Descriptor for menu structure.
 struct MenuDescriptor {
     var sections: [MenuSection]
-    
+
     init(sections: [MenuSection] = []) {
         self.sections = sections
     }
-    
+
     /// Build menu descriptor from current ports and settings.
     func build(
         ports: [PortInfo],
@@ -55,7 +55,8 @@ struct MenuDescriptor {
         errorMessage: String? = nil,
         isLoading: Bool = false,
         groupByCategory: Bool = false,
-        groupByProcess: Bool = false
+        groupByProcess: Bool = false,
+        lastUpdatedAt: Date? = nil,
     ) -> MenuDescriptor {
         var entries = [MenuEntry]()
         let categorizer = PortCategorizer()
@@ -69,9 +70,12 @@ struct MenuDescriptor {
         } else if let error = errorMessage {
             entries.append(.text("Error: \(error)", style: .warning))
         } else {
-            // Add search indicator
-            let searchDisplay = searchText.isEmpty ? "Search ports..." : "Filtering: \(searchText)"
-            entries.append(.text(searchDisplay, style: .secondary))
+            let statusText: String = if searchText.isEmpty {
+                formattedLastUpdatedText(from: lastUpdatedAt)
+            } else {
+                "Filtering: \(searchText)"
+            }
+            entries.append(.text(statusText, style: .secondary))
         }
 
         // Add divider
@@ -140,18 +144,18 @@ struct MenuDescriptor {
 
         return MenuDescriptor(sections: [MenuSection(entries: entries)])
     }
-    
+
     /// Filter ports based on search text and system process setting.
     private func filterPorts(
         _ ports: [PortInfo],
         searchText: String,
-        showSystemProcesses: Bool
+        showSystemProcesses: Bool,
     ) -> [PortInfo] {
         let lowerSearchText = searchText.lowercased()
 
         return ports.filter { port in
             // Filter out system processes if disabled
-            if !showSystemProcesses && port.isSystemProcess {
+            if !showSystemProcesses, port.isSystemProcess {
                 return false
             }
 
@@ -165,10 +169,21 @@ struct MenuDescriptor {
                 port.processName.lowercased(),
                 port.displayName.lowercased(),
                 port.bundleID?.lowercased() ?? "",
-                port.executablePath?.lowercased() ?? ""
+                port.executablePath?.lowercased() ?? "",
             ]
 
             return searchIn.contains { $0.contains(lowerSearchText) }
         }
+    }
+
+    private func formattedLastUpdatedText(from date: Date?) -> String {
+        guard let date else {
+            return "Ready"
+        }
+
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        let relative = formatter.localizedString(for: date, relativeTo: Date())
+        return "Updated \(relative)"
     }
 }
