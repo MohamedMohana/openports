@@ -1,3 +1,4 @@
+# Build outputs
 .DS_Store
 .build/
 Packages/
@@ -6,8 +7,17 @@ DerivedData/
 .swiftpm/
 *.xcarchive
 *.dSYM/
-OpenPorts.app
+
+# Generated icon files (keep source in Icon.iconset/)
 Icon.icns
+Icon.png
+OpenPorts.icns
+
+# App bundles and archives
+OpenPorts.app
+*.zip
+
+# SwiftPM
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
@@ -28,7 +38,7 @@ Icon.icns
 .Trashes
 Icon?
 
-*.zip
-*.app
-
+# IDE
 opencode.jsonc
+.vscode/
+.idea/
