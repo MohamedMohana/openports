@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-No unreleased changes yet.
+### Changed
+- Simplified menu row titles for faster scanning (safety, port/protocol, process, concise tags)
+- Added safety-based row coloring for higher-risk entries
+- Improved port submenu clarity with stronger process action labels (`SIGTERM` / `SIGKILL`)
+
+### Fixed
+- Stopped showing misleading pseudo-project labels (for example `CoreServices`, `Frameworks`, `Contents`, `libexec`) for system paths
+- Project detection now favors real user workspace paths and ignores generic directory components
 
 ## [2.0.2] - 2026-03-03
 

@@ -117,11 +117,18 @@ public class PortCategorizer {
     private let systemProcesses: Set<String> = [
         "launchd", "launchctl", "launchd: helper",
         "kernel_task", "kernel",
-        "distnoted", "mDNSResponder",
+        "distnoted", "mdnsresponder",
         "syslogd", "logd",
         "configd", "notifyd",
-        " Spotlight", "mds",
-        "Terminal", "Finder",
+        "spotlight", "mds",
+        "terminal", "finder",
+    ]
+
+    private let genericProjectComponents: Set<String> = [
+        "/", "users", "home", "documents", "desktop", "downloads",
+        "library", "application support", "applications", "system",
+        "usr", "bin", "sbin", "lib", "libexec", "opt", "private", "var", "tmp",
+        "frameworks", "contents", "macos", "resources", "node_modules", "code", "projects", "workspace",
     ]
 
     /// Categorize a port based on its process information
@@ -182,45 +189,42 @@ public class PortCategorizer {
     /// Detect project name from executable path
     private func detectProjectName(_ port: PortInfo) -> String? {
         guard let path = port.executablePath else { return nil }
+        guard path.hasPrefix("/Users/") || path.hasPrefix("/home/") else { return nil }
 
         let url = URL(fileURLWithPath: path)
         var components = url.pathComponents
 
-        // Remove the filename
-        if !components.isEmpty {
-            components.removeLast()
+        guard !components.isEmpty else {
+            return nil
         }
+        components.removeLast()
 
-        // Look for common project indicators
-        if let lastComponent = components.last {
-            // Python projects
-            if port.processName.contains("python") || port.processName.contains("manage.py") {
-                return lastComponent
+        return bestProjectComponent(from: components)
+    }
+
+    private func bestProjectComponent(from components: [String]) -> String? {
+        for rawComponent in components.reversed() {
+            let component = rawComponent.trimmingCharacters(in: .whitespacesAndNewlines)
+            if component.isEmpty || component.count < 3 {
+                continue
             }
 
-            // Node.js projects
-            if lastComponent == "node_modules", components.count > 1 {
-                return components[components.count - 2]
+            if component.hasPrefix(".") {
+                continue
             }
 
-            // Generic: check if parent directory looks like a project name
-            // (not too short, not a generic system path)
-            if lastComponent.count > 2, !lastComponent.hasPrefix(".") {
-                let genericPaths = ["usr", "bin", "local", "opt", "Applications", "Library", "System"]
-                if !genericPaths.contains(lastComponent) {
-                    return lastComponent
-                }
+            let normalized = component.lowercased()
+            if genericProjectComponents.contains(normalized) {
+                continue
             }
+
+            // App bundle names are usually app names, not project names.
+            if normalized.hasSuffix(".app") {
+                continue
+            }
+
+            return component
         }
-
-        // Try to extract from bundle ID
-        if let bundleID = port.bundleID {
-            let parts = bundleID.split(separator: ".")
-            if parts.count > 2 {
-                return String(parts[parts.count - 2])
-            }
-        }
-
         return nil
     }
 
