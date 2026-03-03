@@ -189,6 +189,9 @@ class MenuViewModel: ObservableObject {
 
         AppLogger.shared.log("Updating menu with \(ports.count) ports, error: \(lastError ?? "none")")
 
+        // Update status bar icon first
+        statusItemController.updateStatusIcon(ports: ports, hasWarnings: lastError != nil)
+        
         let descriptor = MenuDescriptor().build(
             ports: ports,
             searchText: "",

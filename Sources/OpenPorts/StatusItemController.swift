@@ -5,7 +5,7 @@ import SwiftUI
 /// Controller for the menu bar status item.
 @MainActor
 final class StatusItemController {
-    private let statusItem: NSStatusItem
+    let statusItem: NSStatusItem  // Changed from private to let (accessible to extension)
     private var menu: NSMenu?
     
     init() {
@@ -18,6 +18,54 @@ final class StatusItemController {
         // Create the menu
         self.menu = NSMenu()
         statusItem.menu = menu
+    }
+    
+    /// Update the status bar icon based on current port state
+    func updateStatusIcon(ports: [PortInfo], hasWarnings: Bool) {
+        let portCount = ports.count
+        
+        // Determine icon state
+        let (symbolName, color) = determineIconState(ports: ports, hasWarnings: hasWarnings)
+        
+        // Update icon
+        if let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil) {
+            let coloredImage = tintImage(image, with: color)
+            statusItem.button?.image = coloredImage
+            statusItem.button?.toolTip = "OpenPorts - \(portCount) port\(portCount == 1 ? "" : "s") active"
+        }
+    }
+    
+    private func determineIconState(ports: [PortInfo], hasWarnings: Bool) -> (String, NSColor) {
+        if ports.isEmpty {
+            return ("network.slash", .systemGray)
+        }
+        
+        // Check for critical ports
+        let hasCritical = ports.contains { $0.isSystemProcess || $0.safety == .critical }
+        if hasCritical {
+            return ("exclamationmark.shield.fill", .systemRed)
+        }
+        
+        // Check for new ports
+        let hasNewPorts = ports.contains { $0.age == .brandNew || $0.age == .new }
+        if hasNewPorts {
+            return ("network.badge.shield.half.filled", .systemBlue)
+        }
+        
+        // All good
+        return ("network", .systemGreen)
+    }
+    
+    private func tintImage(_ image: NSImage, with color: NSColor) -> NSImage {
+        let tintedImage = image.copy() as! NSImage
+        tintedImage.lockFocus()
+        color.set()
+        
+        let imageRect = NSRect(origin: .zero, size: tintedImage.size)
+        imageRect.fill(using: .sourceAtop)
+        
+        tintedImage.unlockFocus()
+        return tintedImage
     }
     
     /// Update the menu with new descriptor data.
@@ -47,8 +95,7 @@ final class StatusItemController {
                     menu?.addItem(menuItem)
                     
                 case .divider:
-                    let dividerItem = NSMenuItem.separator()
-                    menu?.addItem(dividerItem)
+                    menu?.addItem(NSMenuItem.separator())
                     
                 case .portRow(let port, let category, let technology, let projectName):
                     var portTitle = ":\(port.port) \(port.portProtocol.rawValue)"
@@ -56,9 +103,8 @@ final class StatusItemController {
                         portTitle = "\(icon) \(portTitle)"
                     }
 
-                    if port.isNew {
-                        portTitle = "⚡\(portTitle)"
-                    }
+                    // Add age indicator
+                    portTitle = "\(port.age.icon) \(portTitle)"
 
                     if let safety = port.safety {
                         portTitle = "\(portTitle) [\(safety.icon)]"
@@ -114,9 +160,14 @@ final class StatusItemController {
             submenu.addItem(safetyItem)
         }
 
+        // Add age info
+        let ageItem = NSMenuItem(title: "\(port.age.icon) Age: \(port.age.rawValue)", action: nil, keyEquivalent: "")
+        ageItem.isEnabled = false
+        submenu.addItem(ageItem)
+
         // Add uptime if available
         if let uptime = port.formattedUptime {
-            let uptimeItem = NSMenuItem(title: "⏱️ Uptime: \(uptime)", action: nil, keyEquivalent: "")
+            let uptimeItem = NSMenuItem(title: "⏱ Uptime: \(uptime)", action: nil, keyEquivalent: "")
             uptimeItem.isEnabled = false
             submenu.addItem(uptimeItem)
         }
@@ -184,25 +235,18 @@ final class StatusItemController {
     }
     
     @objc private func refreshMenu() {
-        // Trigger refresh - will be implemented with NotificationCenter
         NotificationCenter.default.post(name: .refreshPorts, object: nil)
     }
     
     @objc private func terminatePort(_ sender: AnyObject?) {
         if let pid = sender?.representedObject as? Int {
-            NotificationCenter.default.post(
-                name: .terminatePort,
-                object: pid
-            )
+            NotificationCenter.default.post(name: .terminatePort, object: pid)
         }
     }
     
     @objc private func forceKill(_ sender: AnyObject?) {
         if let pid = sender?.representedObject as? Int {
-            NotificationCenter.default.post(
-                name: .forceKill,
-                object: pid
-            )
+            NotificationCenter.default.post(name: .forceKill, object: pid)
         }
     }
     
@@ -213,7 +257,6 @@ final class StatusItemController {
     @objc private func viewLogs() {
         let logs = AppLogger.shared.getLogsText()
 
-        // Create a simple alert to show logs
         let alert = NSAlert()
         alert.messageText = "OpenPorts Debug Logs"
         alert.informativeText = logs.isEmpty ? "No logs available" : logs
@@ -226,11 +269,9 @@ final class StatusItemController {
 
         switch response {
         case .alertFirstButtonReturn:
-            // Copy to clipboard
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(logs, forType: .string)
         case .alertThirdButtonReturn:
-            // Clear logs
             AppLogger.shared.clear()
         default:
             break
