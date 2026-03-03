@@ -15,8 +15,14 @@ struct StatusPopoverView: View {
     let onQuit: () -> Void
     let onTerminate: (Int, Bool) -> Void
 
-    private var entries: [MenuEntry] {
-        model.descriptor.sections.flatMap(\.entries)
+    private var entries: [RenderableMenuEntry] {
+        let flattenedEntries = model.descriptor.sections.flatMap(\.entries)
+        return flattenedEntries.enumerated().map { index, entry in
+            RenderableMenuEntry(
+                id: stableEntryID(for: entry, index: index),
+                entry: entry,
+            )
+        }
     }
 
     var body: some View {
@@ -25,9 +31,9 @@ struct StatusPopoverView: View {
             Divider().overlay(Color.white.opacity(0.15))
 
             ScrollView {
-                VStack(spacing: 10) {
-                    ForEach(Array(entries.enumerated()), id: \.offset) { index, entry in
-                        entryView(entry, index: index)
+                LazyVStack(spacing: 10) {
+                    ForEach(entries) { item in
+                        entryView(item.entry)
                     }
                 }
                 .padding(12)
@@ -83,8 +89,27 @@ struct StatusPopoverView: View {
         .padding(.vertical, 12)
     }
 
+    private func stableEntryID(for entry: MenuEntry, index: Int) -> String {
+        switch entry {
+        case let .portRow(port, _, _, _):
+            "port-\(port.pid)-\(port.port)-\(port.portProtocol.rawValue.lowercased())"
+        case let .text(text, style):
+            "text-\(style.id)-\(text)-\(index)"
+        case .divider:
+            "divider-\(index)"
+        case let .button(title, _):
+            "button-\(title)-\(index)"
+        case .refreshButton:
+            "refresh"
+        case .viewLogsButton:
+            "view-logs"
+        case .preferencesButton:
+            "preferences"
+        }
+    }
+
     @ViewBuilder
-    private func entryView(_ entry: MenuEntry, index _: Int) -> some View {
+    private func entryView(_ entry: MenuEntry) -> some View {
         switch entry {
         case let .text(text, style):
             switch style {
@@ -153,6 +178,28 @@ struct StatusPopoverView: View {
             .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct RenderableMenuEntry: Identifiable {
+    let id: String
+    let entry: MenuEntry
+}
+
+private extension MenuEntryStyle {
+    var id: String {
+        switch self {
+        case .header:
+            "header"
+        case .primary:
+            "primary"
+        case .secondary:
+            "secondary"
+        case .warning:
+            "warning"
+        case .system:
+            "system"
+        }
     }
 }
 

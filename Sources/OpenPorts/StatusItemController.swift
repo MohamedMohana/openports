@@ -13,7 +13,7 @@ final class StatusItemController: NSObject {
     private var logsWindow: NSWindow?
 
     override init() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
 
         configureStatusItemButton()
@@ -43,7 +43,7 @@ final class StatusItemController: NSObject {
 
     private func configurePopover() {
         popover.behavior = .transient
-        popover.animates = true
+        popover.animates = false
         popover.contentSize = NSSize(width: 480, height: 620)
 
         let rootView = StatusPopoverView(
@@ -94,7 +94,6 @@ final class StatusItemController: NSObject {
         }
 
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc private func refreshMenu() {

@@ -18,6 +18,13 @@ class MenuViewModel: ObservableObject {
     @Published private(set) var lastError: String?
     @Published private(set) var lastUpdatedAt: Date?
 
+    private struct ObservedSettings: Equatable {
+        let refreshInterval: Double
+        let showSystemProcesses: Bool
+        let groupByCategory: Bool
+        let groupByProcess: Bool
+    }
+
     private let portScanner: PortScanner
     private let processResolver: ProcessResolver
     private let processManager: ProcessManager
@@ -41,6 +48,20 @@ class MenuViewModel: ObservableObject {
         userDefaults.bool(forKey: AppSettingsKey.groupByProcess)
     }
 
+    private let menuAffectingPreferenceKeys: Set<String> = [
+        AppSettingsKey.groupPorts,
+        AppSettingsKey.showSystemProcesses,
+        AppSettingsKey.groupByCategory,
+        AppSettingsKey.groupByProcess,
+    ]
+
+    private var observedSettings = ObservedSettings(
+        refreshInterval: AppSettings.defaultRefreshInterval,
+        showSystemProcesses: AppSettings.defaultShowSystemProcesses,
+        groupByCategory: AppSettings.defaultGroupByCategory,
+        groupByProcess: AppSettings.defaultGroupByProcess,
+    )
+
     var statusItemController: StatusItemController?
 
     init(
@@ -52,6 +73,7 @@ class MenuViewModel: ObservableObject {
         self.processResolver = processResolver
         self.processManager = processManager
         AppSettings.registerDefaults(userDefaults: userDefaults)
+        observedSettings = currentObservedSettings()
 
         setupNotifications()
         configureRefreshTimer()
@@ -104,8 +126,7 @@ class MenuViewModel: ObservableObject {
         NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification, object: userDefaults)
             .sink { [weak self] notification in
                 guard notification.object is UserDefaults else { return }
-                self?.configureRefreshTimer()
-                self?.updateMenu()
+                self?.handleObservedDefaultsChange()
             }
             .store(in: &cancellables)
     }
@@ -115,11 +136,48 @@ class MenuViewModel: ObservableObject {
             return
         }
 
-        if key == AppSettingsKey.refreshInterval {
+        let previousSettings = observedSettings
+        observedSettings = currentObservedSettings()
+
+        if observedSettings.refreshInterval != previousSettings.refreshInterval {
             configureRefreshTimer()
         }
 
-        updateMenu()
+        if menuAffectingPreferenceKeys.contains(key) {
+            updateMenu()
+        }
+    }
+
+    private func handleObservedDefaultsChange() {
+        let previousSettings = observedSettings
+        let currentSettings = currentObservedSettings()
+        guard currentSettings != previousSettings else {
+            return
+        }
+
+        observedSettings = currentSettings
+
+        if currentSettings.refreshInterval != previousSettings.refreshInterval {
+            configureRefreshTimer()
+        }
+
+        let menuNeedsUpdate =
+            currentSettings.showSystemProcesses != previousSettings.showSystemProcesses ||
+            currentSettings.groupByCategory != previousSettings.groupByCategory ||
+            currentSettings.groupByProcess != previousSettings.groupByProcess
+
+        if menuNeedsUpdate {
+            updateMenu()
+        }
+    }
+
+    private func currentObservedSettings() -> ObservedSettings {
+        ObservedSettings(
+            refreshInterval: refreshInterval,
+            showSystemProcesses: showSystemProcesses,
+            groupByCategory: groupByCategory,
+            groupByProcess: groupByProcess,
+        )
     }
 
     private func configureRefreshTimer() {
@@ -170,7 +228,6 @@ class MenuViewModel: ObservableObject {
                     self.lastError = nil
                     self.lastUpdatedAt = Date()
                     self.isLoading = false
-                    self.updateMenu()
                 }
             } else {
                 let errorMsg = result.error ?? "Unknown error"
@@ -180,7 +237,6 @@ class MenuViewModel: ObservableObject {
                     self.lastError = errorMsg
                     self.lastUpdatedAt = Date()
                     self.isLoading = false
-                    self.updateMenu()
                 }
             }
         }
