@@ -1,0 +1,92 @@
+name: Bug Report
+description: Report a bug to help us improve OpenPorts
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this bug! Please fill out the sections below.
+        
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: "When I click on..."
+    validations:
+      required: true
+      
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Launch OpenPorts
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+      
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen
+    validations:
+      required: true
+      
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your problem
+      
+  - type: input
+    id: macOS-version
+    attributes:
+      label: macOS Version
+      description: What version of macOS are you running?
+      placeholder: "14.3.1 (Sonoma)"
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: architecture
+    attributes:
+      label: Mac Architecture
+      description: What type of Mac are you using?
+      options:
+        - Apple Silicon (M1/M2/M3)
+        - Intel (x86_64)
+    validations:
+      required: true
+      
+  - type: input
+    id: openports-version
+    attributes:
+      label: OpenPorts Version
+      description: What version of OpenPorts are you running?
+      placeholder: "1.1.9"
+    validations:
+      required: true
+      
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console Logs
+      description: |
+        If applicable, paste relevant console logs. To view logs:
+        1. Open Console.app
+        2. Search for "OpenPorts"
+        3. Copy relevant entries
+      render: shell
+      
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here

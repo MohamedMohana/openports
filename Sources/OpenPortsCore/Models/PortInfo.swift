@@ -1,5 +1,75 @@
 import Foundation
 
+/// Age classification for ports to help users distinguish new from long-running processes
+public enum PortAge: String, Sendable, Equatable, CaseIterable {
+    /// Just started (< 1 minute ago) - Lightning bolt
+    case brandNew = "Brand New"
+    
+    /// Recently started (< 5 minutes ago) - Sparkle
+    case new = "New"
+    
+    /// Fresh (< 1 hour ago) - Clock
+    case recent = "Recent"
+    
+    /// Running for a while (< 24 hours) - Pushpin
+    case established = "Established"
+    
+    /// Long-running (>= 24 hours) - Classic building
+    case old = "Old"
+    
+    /// Icon emoji for this age level
+    public var icon: String {
+        switch self {
+        case .brandNew: return "⚡"
+        case .new: return "🌟"
+        case .recent: return "🕐"
+        case .established: return "📌"
+        case .old: return "🏛️"
+        }
+    }
+    
+    /// Sort order for grouping (lower = newer, should appear first)
+    public var sortOrder: Int {
+        switch self {
+        case .brandNew: return 0
+        case .new: return 1
+        case .recent: return 2
+        case .established: return 3
+        case .old: return 4
+        }
+    }
+    
+    /// Human-readable description
+    public var description: String {
+        switch self {
+        case .brandNew: return "Just started (< 1m)"
+        case .new: return "Recent (< 5m)"
+        case .recent: return "Fresh (< 1h)"
+        case .established: return "Running for a while (< 24h)"
+        case .old: return "Long-running (>= 24h)"
+        }
+    }
+    
+    /// Determine age category from uptime
+    public static func from(uptime: TimeInterval?) -> PortAge {
+        guard let uptime = uptime else {
+            return .established // Default to established if unknown
+        }
+        
+        if uptime < 60 {
+            return .brandNew
+        } else if uptime < 300 { // 5 minutes
+            return .new
+        } else if uptime < 3600 { // 1 hour
+            return .recent
+        } else if uptime < 86400 { // 24 hours
+            return .established
+        } else {
+            return .old
+        }
+    }
+}
+
 /// Safety level for ports to help users make informed decisions about killing processes
 public enum PortSafety: String, Sendable, Equatable, CaseIterable {
     /// Critical system services that should not be killed (SSH, HTTP, HTTPS, core macOS processes)
@@ -165,6 +235,11 @@ public struct PortInfo: Identifiable, Sendable, Equatable {
         } else {
             return "\(Int(uptime / 86400))d"
         }
+    }
+    
+    /// Age classification based on uptime
+    public var age: PortAge {
+        return PortAge.from(uptime: uptime)
     }
 }
 

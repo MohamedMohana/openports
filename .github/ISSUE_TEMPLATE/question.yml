@@ -1,0 +1,30 @@
+name: Question
+description: Ask a general question or seek help
+labels: ["question", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question or suggestion? Check our [FAQ](https://github.com/mohamedMohana/openports/discussions) first.
+  - type: checkboxes
+    attributes:
+      label: Check first
+      description: optional
+      options:
+        - "Yes, I searched first" (recommended)
+        - "No, thanks" (not necessary)
+      default: false
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: (optional) add any other context or details that might help us understand your issue better.
+      placeholder: e.g., "What were in this tool?"
+      value: "OpenPorts"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Your answer
+      description: Add any other you'd like to share with the maintainers or developers

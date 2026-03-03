@@ -1,0 +1,51 @@
+name: Feature Request
+description: Sugg est an idea for openports to or help us prioritize what feature to add
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please check the [issues](](https://github.com/MohamedMohana/openports/issues) to see if your's already been.
+        
+        If you'd like to **discuss** an's feature with other team or create a mockup of screenshots, diagrams, or visual aids in understanding.
+        
+        Also, consider joining our [community Discord server](https://discord.gg/mohamedmohana) for discussions!
+        
+  - type: input
+    id: additional-context
+    attributes:
+      label: Context
+      description: Any additional context or background that would be helpful
+      placeholder: "E.g., 'My project is a related microservices'
+  - type: checkboxes
+    attributes:
+      label: This are be implemented? (Check all that apply)
+      description: Check the that are currently implemented and your you know they benefit from them.
+  - type: input
+    id: priority
+    attributes:
+      label: priority
+      options:
+        - High (needed immediately)
+        - Medium (can wait until next release)
+        - Low (nice to have, future)
+      default: false
+  - type: textarea
+    attributes:
+      label: Mockups
+      description: Provide mockups or quick diagrams/images ( show concept in action.
+      placeholder: e.g., open links to existing issues
+ new workflows, demos
+
+**What's working?**
+      value: |
+        Let me know if this is aren't already working!
+
+        If you'd like to see a demo first, please check existing issues and test the new concept thoroughly before submitting.
+
+  - type: input
+    attributes:
+      label: Demo URL
+      description: Optional - provide a link to a demo version or build from source. We link to a live demo if available.

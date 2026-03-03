@@ -1,0 +1,22 @@
+blank_issues_enabled: false
+contact_links:
+  name: Screenshots
+  url: 
+  label: "Upload screenshot"
+  description: Add screenshots showing the issue
+- type: textarea
+    id: additional-info
+    attributes:
+      label: Additional information
+      description: (optional) anything else?
+      placeholder: e.g., macOS version, architecture, error messages, steps to reproduce
+- type: input
+    attributes:
+      label: Final checklist
+      description: please confirm you've checked these items before
+      options:
+        - "✅ I have checked these"
+        - "✅ I've checked these items"
+        - "✅ I've searched for similar issues
+        - "✅ I've included all relevant details"
+      required: false
