@@ -10,32 +10,32 @@ public enum PortCategory: String, Sendable, CaseIterable {
     case media = "Media"
     case network = "Network"
     case other = "Other"
-    
+
     /// Icon emoji for this category
     public var icon: String {
         switch self {
-        case .development: return "💻"
-        case .database: return "🗄️"
-        case .webBrowser: return "🌐"
-        case .system: return "⚙️"
-        case .communication: return "💬"
-        case .media: return "🎵"
-        case .network: return "🔌"
-        case .other: return "📦"
+        case .development: "💻"
+        case .database: "🗄️"
+        case .webBrowser: "🌐"
+        case .system: "⚙️"
+        case .communication: "💬"
+        case .media: "🎵"
+        case .network: "🔌"
+        case .other: "📦"
         }
     }
-    
+
     /// Color for this category (for future UI use)
     public var color: String {
         switch self {
-        case .development: return "#4CAF50"
-        case .database: return "#FF9800"
-        case .webBrowser: return "#2196F3"
-        case .system: return "#9E9E9E"
-        case .communication: return "#E91E63"
-        case .media: return "#9C27B0"
-        case .network: return "#00BCD4"
-        case .other: return "#607D8B"
+        case .development: "#4CAF50"
+        case .database: "#FF9800"
+        case .webBrowser: "#2196F3"
+        case .system: "#9E9E9E"
+        case .communication: "#E91E63"
+        case .media: "#9C27B0"
+        case .network: "#00BCD4"
+        case .other: "#607D8B"
         }
     }
 }
@@ -50,7 +50,6 @@ public struct CategorizedPortInfo {
 
 /// Service for categorizing ports and detecting project names
 public class PortCategorizer {
-    
     public init() {}
     private let developmentTools: Set<String> = [
         "python", "python3", "python3.9", "python3.10", "python3.11", "python3.12",
@@ -62,9 +61,9 @@ public class PortCategorizer {
         "rustc", "cargo",
         "dart", "flutter",
         "dotnet", "mono",
-        "julia", "racket", "haskell-stack"
+        "julia", "racket", "haskell-stack",
     ]
-    
+
     private let databases: Set<String> = [
         "postgres", "postgresql", "postgres: server",
         "mysql", "mysqld",
@@ -74,18 +73,18 @@ public class PortCategorizer {
         "sqlite", "sqlite3",
         "cassandra",
         "elasticsearch",
-        "influxdb"
+        "influxdb",
     ]
-    
+
     private let webBrowsers: Set<String> = [
         "chrome", "google chrome", "chromium",
         "safari",
         "firefox",
         "microsoft edge", "msedge",
         "opera",
-        "brave"
+        "brave",
     ]
-    
+
     private let communication: Set<String> = [
         "slack",
         "discord",
@@ -93,17 +92,17 @@ public class PortCategorizer {
         "zoom",
         "skype",
         "telegram",
-        "whatsapp"
+        "whatsapp",
     ]
-    
+
     private let media: Set<String> = [
         "spotify",
         "vlc",
         "music",
         "itunes",
-        "quicktime player"
+        "quicktime player",
     ]
-    
+
     private let network: Set<String> = [
         "ssh", "sshd",
         "nginx", "apache", "httpd",
@@ -112,9 +111,9 @@ public class PortCategorizer {
         "minikube",
         "virtualbox", "vmware",
         "wireshark",
-        "tailscale", "wireguard"
+        "tailscale", "wireguard",
     ]
-    
+
     private let systemProcesses: Set<String> = [
         "launchd", "launchctl", "launchd: helper",
         "kernel_task", "kernel",
@@ -122,98 +121,98 @@ public class PortCategorizer {
         "syslogd", "logd",
         "configd", "notifyd",
         " Spotlight", "mds",
-        "Terminal", "Finder"
+        "Terminal", "Finder",
     ]
-    
+
     /// Categorize a port based on its process information
     public func categorize(_ port: PortInfo) -> CategorizedPortInfo {
         let category = determineCategory(port)
         let projectName = detectProjectName(port)
         let technology = detectTechnology(port)
-        
+
         return CategorizedPortInfo(
             portInfo: port,
             category: category,
             projectName: projectName,
-            technology: technology
+            technology: technology,
         )
     }
-    
+
     private func determineCategory(_ port: PortInfo) -> PortCategory {
         let processName = port.processName.lowercased()
-        
+
         // Check development tools
         if developmentTools.contains(processName) || processName.contains("python") || processName.contains("node") || processName.contains("ruby") || processName.contains("php") || processName.contains("java") || processName.contains("go") || processName.contains("cargo") {
             return .development
         }
-        
+
         // Check databases
         if databases.contains(processName) || processName.contains("postgres") || processName.contains("mysql") || processName.contains("redis") || processName.contains("mongo") {
             return .database
         }
-        
+
         // Check web browsers
         if webBrowsers.contains(processName) || processName.contains("chrome") || processName.contains("safari") || processName.contains("firefox") {
             return .webBrowser
         }
-        
+
         // Check communication
         if communication.contains(processName) || processName.contains("slack") || processName.contains("discord") || processName.contains("teams") {
             return .communication
         }
-        
+
         // Check media
         if media.contains(processName) || processName.contains("spotify") || processName.contains("vlc") {
             return .media
         }
-        
+
         // Check network
         if network.contains(processName) || processName.contains("nginx") || processName.contains("apache") || processName.contains("docker") {
             return .network
         }
-        
+
         // Check system processes
         if systemProcesses.contains(processName) || port.isSystemProcess {
             return .system
         }
-        
+
         return .other
     }
-    
+
     /// Detect project name from executable path
     private func detectProjectName(_ port: PortInfo) -> String? {
         guard let path = port.executablePath else { return nil }
-        
+
         let url = URL(fileURLWithPath: path)
         var components = url.pathComponents
-        
+
         // Remove the filename
         if !components.isEmpty {
             components.removeLast()
         }
-        
+
         // Look for common project indicators
         if let lastComponent = components.last {
             // Python projects
             if port.processName.contains("python") || port.processName.contains("manage.py") {
                 return lastComponent
             }
-            
+
             // Node.js projects
-            if lastComponent == "node_modules" && components.count > 1 {
+            if lastComponent == "node_modules", components.count > 1 {
                 return components[components.count - 2]
             }
-            
+
             // Generic: check if parent directory looks like a project name
             // (not too short, not a generic system path)
-            if lastComponent.count > 2 && !lastComponent.hasPrefix(".") {
+            if lastComponent.count > 2, !lastComponent.hasPrefix(".") {
                 let genericPaths = ["usr", "bin", "local", "opt", "Applications", "Library", "System"]
                 if !genericPaths.contains(lastComponent) {
                     return lastComponent
                 }
             }
         }
-        
+
         // Try to extract from bundle ID
         if let bundleID = port.bundleID {
             let parts = bundleID.split(separator: ".")
@@ -221,14 +220,14 @@ public class PortCategorizer {
                 return String(parts[parts.count - 2])
             }
         }
-        
+
         return nil
     }
-    
+
     /// Detect the specific technology being used
     private func detectTechnology(_ port: PortInfo) -> String? {
         let processName = port.processName.lowercased()
-        
+
         if processName.contains("python") || processName.contains("django") || processName.contains("flask") {
             return "Python"
         }
@@ -286,29 +285,29 @@ public class PortCategorizer {
         if processName.contains("docker") {
             return "Docker"
         }
-        
+
         return nil
     }
-    
+
     /// Group ports by category
     public func groupByCategory(_ ports: [PortInfo]) -> [PortCategory: [PortInfo]] {
         let categorized = ports.map { categorize($0) }
         var grouped: [PortCategory: [PortInfo]] = [:]
-        
+
         for categorizedPort in categorized {
             if grouped[categorizedPort.category] == nil {
                 grouped[categorizedPort.category] = []
             }
             grouped[categorizedPort.category]?.append(categorizedPort.portInfo)
         }
-        
+
         return grouped
     }
-    
+
     /// Group ports by process/app name
     public func groupByProcess(_ ports: [PortInfo]) -> [String: [PortInfo]] {
         var grouped: [String: [PortInfo]] = [:]
-        
+
         for port in ports {
             let processName = port.displayName.isEmpty ? port.processName : port.displayName
             if grouped[processName] == nil {
@@ -316,7 +315,7 @@ public class PortCategorizer {
             }
             grouped[processName]?.append(port)
         }
-        
+
         return grouped
     }
 }

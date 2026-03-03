@@ -181,6 +181,10 @@ struct MenuDescriptor {
             return "Ready"
         }
 
+        if Date().timeIntervalSince(date) < 1 {
+            return "Updated just now"
+        }
+
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .short
         let relative = formatter.localizedString(for: date, relativeTo: Date())

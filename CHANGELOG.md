@@ -127,12 +127,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **1.1.x**: Safety ratings, preferences, developer intelligence
 - **1.0.x**: Initial release with core port monitoring features
 
-## Upcoming Features (Roadmap)
+## Current Development Focus
 
-See [README.md](README.md) for the complete roadmap including:
-- UDP port support
-- Port favorites/watchlist
-- Historical usage data
-- Export to CSV/JSON
-- Customizable app icon themes
-- Widget support (macOS 14+)
+See [README.md](README.md) for the active roadmap. Current lightweight priorities:
+- Export actions (CSV/JSON/Markdown)
+- Favorites/watchlist
+- Opt-in smart notifications
+- Continued UX cleanup and performance stability

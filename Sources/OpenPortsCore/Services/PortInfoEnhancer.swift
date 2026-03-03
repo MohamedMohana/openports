@@ -32,7 +32,7 @@ public class PortInfoEnhancer {
                 isSystemProcess: port.isSystemProcess,
                 safety: port.safety ?? safetyAnalyzer.analyze(port),
                 uptime: uptime ?? port.uptime,
-                isNew: isNew || port.isNew
+                isNew: isNew || port.isNew,
             )
 
             enhancedPorts.append(enhancedPort)
@@ -59,7 +59,8 @@ public class PortInfoEnhancer {
 
             let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
             guard let output = String(data: data, encoding: .utf8),
-                  !output.isEmpty else {
+                  !output.isEmpty
+            else {
                 return nil
             }
 

@@ -107,17 +107,18 @@ final class StatusItemController: NSObject {
                     menu?.addItem(NSMenuItem.separator())
 
                 case let .portRow(port, category, technology, projectName):
-                    var portTitle = ":\(port.port) \(port.portProtocol.rawValue)"
-                    if let icon = category?.icon {
-                        portTitle = "\(icon) \(portTitle)"
-                    }
-
-                    // Add age indicator
-                    portTitle = "\(port.age.icon) \(portTitle)"
-
-                    if let safety = port.safety {
-                        portTitle = "\(portTitle) [\(safety.icon)]"
-                    }
+                    let categoryIcon = category?.icon ?? ""
+                    let safetyIcon = port.safety?.icon ?? ""
+                    let processDisplayName = projectName ?? port.displayName
+                    let portTitle = [
+                        port.age.icon,
+                        categoryIcon,
+                        ":\(port.port) \(port.portProtocol.rawValue)",
+                        safetyIcon,
+                        processDisplayName,
+                    ]
+                    .filter { !$0.isEmpty }
+                    .joined(separator: " ")
 
                     let menuItem = NSMenuItem(title: portTitle, action: nil, keyEquivalent: "")
                     menuItem.submenu = createPortMenu(for: port, category: category, technology: technology, projectName: projectName)
@@ -208,7 +209,7 @@ final class StatusItemController: NSObject {
         submenu.addItem(processInfoItem)
 
         // Add PID
-        let pidItem = NSMenuItem(title: "ID: \(port.pid)", action: nil, keyEquivalent: "")
+        let pidItem = NSMenuItem(title: "PID: \(port.pid)", action: nil, keyEquivalent: "")
         pidItem.isEnabled = false
         submenu.addItem(pidItem)
 

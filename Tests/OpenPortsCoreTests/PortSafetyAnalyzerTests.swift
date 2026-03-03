@@ -1,8 +1,7 @@
-import XCTest
 @testable import OpenPortsCore
+import XCTest
 
 final class PortSafetyAnalyzerTests: XCTestCase {
-
     let analyzer = PortSafetyAnalyzer()
 
     func testCriticalPortSSH() {
@@ -14,7 +13,7 @@ final class PortSafetyAnalyzerTests: XCTestCase {
             appName: nil,
             bundleID: nil,
             executablePath: "/usr/sbin/sshd",
-            isSystemProcess: true
+            isSystemProcess: true,
         )
 
         let safety = analyzer.analyze(port)
@@ -30,7 +29,7 @@ final class PortSafetyAnalyzerTests: XCTestCase {
             appName: nil,
             bundleID: nil,
             executablePath: "/usr/local/bin/nginx",
-            isSystemProcess: false
+            isSystemProcess: false,
         )
 
         let safety = analyzer.analyze(port)
@@ -46,7 +45,7 @@ final class PortSafetyAnalyzerTests: XCTestCase {
             appName: nil,
             bundleID: nil,
             executablePath: "/usr/sbin/httpd",
-            isSystemProcess: false
+            isSystemProcess: false,
         )
 
         let safety = analyzer.analyze(port)
@@ -62,7 +61,7 @@ final class PortSafetyAnalyzerTests: XCTestCase {
             appName: nil,
             bundleID: nil,
             executablePath: "/usr/local/bin/postgres",
-            isSystemProcess: false
+            isSystemProcess: false,
         )
 
         let safety = analyzer.analyze(port)
@@ -78,7 +77,7 @@ final class PortSafetyAnalyzerTests: XCTestCase {
             appName: nil,
             bundleID: nil,
             executablePath: "/usr/local/bin/mysql",
-            isSystemProcess: false
+            isSystemProcess: false,
         )
 
         let safety = analyzer.analyze(port)
@@ -97,7 +96,7 @@ final class PortSafetyAnalyzerTests: XCTestCase {
             isSystemProcess: false,
             safety: nil,
             uptime: 120,
-            isNew: true
+            isNew: true,
         )
 
         let safety = analyzer.analyze(port)
@@ -116,7 +115,7 @@ final class PortSafetyAnalyzerTests: XCTestCase {
             isSystemProcess: false,
             safety: nil,
             uptime: 150,
-            isNew: true
+            isNew: true,
         )
 
         let safety = analyzer.analyze(port)
@@ -135,7 +134,7 @@ final class PortSafetyAnalyzerTests: XCTestCase {
             isSystemProcess: false,
             safety: nil,
             uptime: 3600,
-            isNew: false
+            isNew: false,
         )
 
         let safety = analyzer.analyze(port)
@@ -151,7 +150,7 @@ final class PortSafetyAnalyzerTests: XCTestCase {
             appName: nil,
             bundleID: "com.apple.mDNSResponder",
             executablePath: "/usr/sbin/mDNSResponder",
-            isSystemProcess: true
+            isSystemProcess: true,
         )
 
         let safety = analyzer.analyze(port)
@@ -167,7 +166,7 @@ final class PortSafetyAnalyzerTests: XCTestCase {
             appName: nil,
             bundleID: nil,
             executablePath: "/usr/sbin/sshd",
-            isSystemProcess: true
+            isSystemProcess: true,
         )
 
         let description = analyzer.getSafetyDescription(port)
@@ -183,7 +182,7 @@ final class PortSafetyAnalyzerTests: XCTestCase {
             appName: nil,
             bundleID: nil,
             executablePath: "/usr/local/bin/postgres",
-            isSystemProcess: false
+            isSystemProcess: false,
         )
 
         let description = analyzer.getSafetyDescription(port)
@@ -199,7 +198,7 @@ final class PortSafetyAnalyzerTests: XCTestCase {
             appName: nil,
             bundleID: nil,
             executablePath: "/usr/local/bin/postgres",
-            isSystemProcess: false
+            isSystemProcess: false,
         )
 
         let shouldWarnHighRiskOnly = analyzer.shouldShowWarning(for: port, warningLevel: .highRiskOnly)

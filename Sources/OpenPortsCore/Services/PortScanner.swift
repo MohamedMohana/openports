@@ -3,18 +3,18 @@ import Logging
 
 /// Service for scanning open ports on the system using `lsof`.
 public actor PortScanner {
-    public init() {
-    }
+    public init() {}
+
     private let logger = Logger(label: "com.openports.portscanner")
     private let lsofPath = "/usr/sbin/lsof"
-    
+
     /// Scan for open listening TCP ports.
     public func scanOpenPorts() async -> PortScanResult {
         guard FileManager.default.fileExists(atPath: lsofPath) else {
             logger.error("lsof not found at \(lsofPath)")
             return .failure("lsof command not found. Please ensure macOS developer tools are installed.")
         }
-        
+
         do {
             let output = try await runLsofCommand()
             let ports = try parseLsofOutput(output)
@@ -25,15 +25,15 @@ public actor PortScanner {
             return .failure(error.localizedDescription)
         }
     }
-    
+
     /// Execute lsof command and return output.
     private func runLsofCommand() async throws -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: lsofPath)
         process.arguments = [
-            "-nP",             // Don't resolve hostnames, show numeric ports
-            "-iTCP",          // TCP ports only
-            "-sTCP:LISTEN"    // Listening TCP ports only
+            "-nP", // Don't resolve hostnames, show numeric ports
+            "-iTCP", // TCP ports only
+            "-sTCP:LISTEN", // Listening TCP ports only
         ]
 
         let outputPipe = Pipe()
@@ -65,7 +65,7 @@ public actor PortScanner {
         logger.debug("lsof output: \(output.count) characters")
         return output
     }
-    
+
     /// Parse lsof output into PortInfo array.
     /// Expected lsof format: COMMAND PID USER FD TYPE DEVICE SIZE/OFF NODE NAME
     /// Example: ControlCe 617 mohana 9u IPv4 0x... 0t0 TCP *:7000 (LISTEN)
@@ -87,8 +87,31 @@ public actor PortScanner {
             }
         }
 
-        logger.info("Successfully parsed \(ports.count) ports from lsof output")
-        return ports
+        let deduplicatedPorts = deduplicatePorts(ports)
+        logger.info("Successfully parsed \(ports.count) ports from lsof output (\(deduplicatedPorts.count) unique)")
+        return deduplicatedPorts
+    }
+
+    /// Deduplicate ports by protocol, port number, and PID.
+    /// lsof can emit duplicate listening rows for IPv4/IPv6 or multiple file descriptors.
+    func deduplicatePorts(_ ports: [PortInfo]) -> [PortInfo] {
+        struct SocketKey: Hashable {
+            let port: Int
+            let portProtocol: PortInfo.PortProtocol
+            let pid: Int
+        }
+
+        var seen = Set<SocketKey>()
+        var uniquePorts: [PortInfo] = []
+
+        for port in ports {
+            let key = SocketKey(port: port.port, portProtocol: port.portProtocol, pid: port.pid)
+            if seen.insert(key).inserted {
+                uniquePorts.append(port)
+            }
+        }
+
+        return uniquePorts
     }
 
     /// Parse a single line of lsof output.
@@ -133,7 +156,7 @@ public actor PortScanner {
             appName: nil,
             bundleID: nil,
             executablePath: nil,
-            isSystemProcess: isSystemUser(user)
+            isSystemProcess: isSystemUser(user),
         )
     }
 
@@ -155,7 +178,7 @@ public actor PortScanner {
             .trimmingCharacters(in: .whitespaces)
 
         // Validate port is numeric and in valid range
-        guard let port = Int(portString), port > 0 && port <= 65535 else {
+        guard let port = Int(portString), port > 0, port <= 65535 else {
             return nil
         }
 
@@ -172,13 +195,13 @@ public actor PortScanner {
 enum PortScannerError: LocalizedError {
     case invalidOutput
     case commandFailed(status: Int32)
-    
+
     var errorDescription: String? {
         switch self {
         case .invalidOutput:
-            return "Invalid output from lsof command"
-        case .commandFailed(let status):
-            return "lsof command failed with status: \(status)"
+            "Invalid output from lsof command"
+        case let .commandFailed(status):
+            "lsof command failed with status: \(status)"
         }
     }
 }
