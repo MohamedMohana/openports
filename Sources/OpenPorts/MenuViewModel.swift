@@ -151,8 +151,8 @@ class MenuViewModel: ObservableObject {
                 await MainActor.run {
                     self.ports = enhancedPorts
                     self.lastError = nil
-                    self.updateMenu()
                     self.isLoading = false
+                    self.updateMenu()
                 }
             } else {
                 let errorMsg = result.error ?? "Unknown error"
@@ -160,8 +160,8 @@ class MenuViewModel: ObservableObject {
                 await MainActor.run {
                     self.ports = []
                     self.lastError = errorMsg
-                    self.updateMenu()
                     self.isLoading = false
+                    self.updateMenu()
                 }
             }
         }
