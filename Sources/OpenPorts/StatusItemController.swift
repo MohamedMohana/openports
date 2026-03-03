@@ -306,3 +306,64 @@ extension Notification.Name {
     static let showPreferences = Notification.Name("com.mohamedmohana.openports.showPreferences")
     static let preferenceChanged = Notification.Name("com.mohamedmohana.openports.preferenceChanged")
 }
+
+// MARK: - Export Menu Item
+    @objc private func exportPorts() {
+        let ports = currentPorts
+        let alert = NSAlert()
+        alert.messageText = "Export Ports"
+        alert.informativeText = "Choose export format for \(ports.count) port(s)"
+        alert.alertStyle = .informational
+        
+        alert.addButton(withTitle: "CSV")
+        alert.addButton(withTitle: "JSON")
+        alert.addButton(withTitle: "Markdown")
+        alert.addButton(withTitle: "Cancel")
+        
+        let response = alert.runModal()
+        
+        let format: ExportFormat
+        switch response {
+        case .alertFirstButtonReturn:
+            format = .csv
+        case .alertSecondButtonReturn:
+            format = .json
+        case .alertThirdButtonReturn:
+            format = .markdown
+        default:
+            return
+        }
+        
+        Task {
+            let exporter = PortExporter()
+            let content = await exporter.export(ports: ports, format: format)
+            
+            if let fileURL = await exporter.saveToFile(content, filename: "export", format: format) {
+                let savePanel = NSSavePanel()
+                savePanel.title = "Save Export"
+                savePanel.nameFieldStringValue = fileURL.lastPathComponent
+                savePanel.allowedContentTypes = [UTType(filenameExtension: format.fileExtension) ?? .data]
+                
+                savePanel.begin { response in
+                    if response == .OK, let destinationURL = savePanel.url {
+                        try? {
+                            try FileManager.default.copyItem(at: fileURL, to: destinationURL)
+                            NSWorkspace.shared.activateFileViewerSelecting([destinationURL])
+                        } catch {
+                            print("Export failed: \(error)")
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Toggle Favorite
+    @objc private func toggleFavorite(_ sender: NSMenuItem) {
+        if let portNumber = sender.representedObject as? Int {
+            FavoritesManager.shared.toggle(portNumber)
+            // Refresh menu to update star
+            NotificationCenter.default.post(name: .refreshPorts, object: nil)
+        }
+    }
+}
