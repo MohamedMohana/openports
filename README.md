@@ -49,6 +49,7 @@
 | 🔧 **Tech Stack Detection** | Identify Python, Node.js, PostgreSQL, Docker, and more |
 | 🧹 **Duplicate Cleanup** | Deduplicates repeated `lsof` rows for cleaner menus |
 | 🚀 **Launch at Login** | Start automatically when you log in |
+| ⬆️ **In-App Updates** | Check for updates and upgrade via Homebrew from Preferences |
 | 🌙 **Dark Mode** | Beautiful in both light and dark modes |
 
 ### Active Development (Lightweight)
@@ -56,7 +57,7 @@
 - 📊 Reintroduce export actions (CSV/JSON/Markdown) with stable UX ([#4](https://github.com/MohamedMohana/openports/issues/4))
 - ⭐ Reintroduce favorites/watchlist without menu clutter ([#5](https://github.com/MohamedMohana/openports/issues/5))
 - 🔍 Add lightweight menu search/filter (no persistent background indexing) ([#6](https://github.com/MohamedMohana/openports/issues/6))
-- 🔔 Add opt-in smart notifications with conservative defaults ([#7](https://github.com/MohamedMohana/openports/issues/7))
+- 🔔 Expand opt-in smart port notifications with conservative defaults ([#7](https://github.com/MohamedMohana/openports/issues/7))
 
 ### Safety Rating System
 
@@ -147,6 +148,8 @@ OpenPorts stores preferences in `~/Library/Preferences/com.mohamedmohana.openpor
 - **Show New Process Badges**: Display ⚡ for recent processes
 - **Enable Port History**: Track usage patterns
 - **Launch at Login**: Auto-start on login
+- **Auto Update Checks**: Check GitHub releases in the background (daily, opt-in toggle)
+- **Update Controls**: Manual check and Homebrew upgrade button in Preferences
 
 ## 🤝 Comparison with Other Tools
 
@@ -176,6 +179,7 @@ OpenPorts stores preferences in `~/Library/Preferences/com.mohamedmohana.openpor
 - [x] Stabilize build, tests, and release pipeline
 - [x] Professional native preferences UX refresh
 - [x] Deduplicate repeated port rows in menu output
+- [x] Add in-app update checks + update notifications + Homebrew upgrade action
 - [ ] Export actions (CSV/JSON/Markdown) reintroduced behind stable UI ([#4](https://github.com/MohamedMohana/openports/issues/4))
 - [ ] Favorites/watchlist reintroduced with lightweight data model ([#5](https://github.com/MohamedMohana/openports/issues/5))
 - [ ] Add lightweight menu search/filter ([#6](https://github.com/MohamedMohana/openports/issues/6))
@@ -236,7 +240,9 @@ Some processes are protected by macOS System Integrity Protection (SIP).
 
 ### App Not Updating
 
-If installed via Homebrew:
+Try Preferences → Updates first (`Check for Updates` and `Update via Homebrew`).
+
+If you prefer terminal:
 ```bash
 brew update && brew upgrade --cask MohamedMohana/tap/openports
 ```

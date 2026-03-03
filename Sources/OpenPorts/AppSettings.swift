@@ -10,6 +10,9 @@ enum AppSettingsKey {
     static let killWarningLevel = "killWarningLevel"
     static let showNewProcessBadges = "showNewProcessBadges"
     static let portHistoryEnabled = "portHistoryEnabled"
+    static let autoCheckForUpdates = "autoCheckForUpdates"
+    static let lastUpdateCheckTimestamp = "lastUpdateCheckTimestamp"
+    static let lastNotifiedUpdateVersion = "lastNotifiedUpdateVersion"
 
     static let trackedPreferenceKeys: Set<String> = [
         refreshInterval,
@@ -20,6 +23,7 @@ enum AppSettingsKey {
         killWarningLevel,
         showNewProcessBadges,
         portHistoryEnabled,
+        autoCheckForUpdates,
     ]
 }
 
@@ -32,6 +36,9 @@ enum AppSettings {
     static let defaultKillWarningLevel = KillWarningLevel.highRiskOnly
     static let defaultShowNewProcessBadges = true
     static let defaultPortHistoryEnabled = false
+    static let defaultAutoCheckForUpdates = true
+    static let defaultLastUpdateCheckTimestamp: Double = 0
+    static let defaultLastNotifiedUpdateVersion = ""
 
     static func registerDefaults(userDefaults: UserDefaults = .standard) {
         userDefaults.register(defaults: [
@@ -43,6 +50,9 @@ enum AppSettings {
             AppSettingsKey.killWarningLevel: defaultKillWarningLevel.rawValue,
             AppSettingsKey.showNewProcessBadges: defaultShowNewProcessBadges,
             AppSettingsKey.portHistoryEnabled: defaultPortHistoryEnabled,
+            AppSettingsKey.autoCheckForUpdates: defaultAutoCheckForUpdates,
+            AppSettingsKey.lastUpdateCheckTimestamp: defaultLastUpdateCheckTimestamp,
+            AppSettingsKey.lastNotifiedUpdateVersion: defaultLastNotifiedUpdateVersion,
         ])
     }
 }

@@ -59,6 +59,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Now trigger the first refresh (manual only - no auto-refresh)
         menuViewModel.refreshPorts()
 
+        Task {
+            await AppUpdateService.shared.performLaunchCheckIfNeeded()
+        }
+
         print("OpenPorts started successfully")
     }
 

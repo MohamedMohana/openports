@@ -11,12 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Typed app settings layer (`AppSettings`) to centralize defaults and preference keys
 - Auto-refresh timer wiring in `MenuViewModel` based on the preferences interval
 - Relative "Updated …" status line in the menu descriptor
+- In-app Updates section in Preferences with manual checks and Homebrew upgrade action
+- Automatic daily update checks (configurable) with system notification when a newer release is available
+- `SemanticVersion` parser/comparator with dedicated unit tests for release version comparison
 
 ### Changed
 - Preferences window redesigned with native grouped form sections and clearer control hierarchy
 - Status icon now reflects scan warnings (`exclamationmark.triangle.fill`) and preferences window reuse
 - CI workflow now runs non-mutating formatting checks (`swiftformat --lint`) and strict lint/test gates
 - Release workflow now uses valid architecture mapping and packages app bundles from the correct path
+- Reset-to-defaults now includes update-check preferences
 
 ### Fixed
 - Fixed Swift compile failures in `FavoritesManager` and `NotificationManager` (`@Published var`, actor isolation)
@@ -24,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed URL scheme parsing in `AppDelegate` (`openports://kill?port=3000&force=true`)
 - Updated `.swift-version` from `5.1` to `6.1`
 - Synchronized project version metadata for the stabilization target (`2.0.1`)
+- Prevented repeated release notifications for the same version by tracking last notified version
 
 ### Removed
 - Deleted old feature branch `feature/safety-ratings-v1.1.0` (already merged)
@@ -132,5 +137,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 See [README.md](README.md) for the active roadmap. Current lightweight priorities:
 - Export actions (CSV/JSON/Markdown)
 - Favorites/watchlist
-- Opt-in smart notifications
+- Lightweight menu search/filter
 - Continued UX cleanup and performance stability
