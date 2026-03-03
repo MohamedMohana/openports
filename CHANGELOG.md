@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No unreleased changes yet.
 
+## [2.0.5] - 2026-03-03
+
+### Added
+- Added a dedicated menubar icon style separate from the app icon for clearer toolbar appearance
+- Added stable entry identifiers in the custom popover list to reduce unnecessary row rebuilds
+
+### Changed
+- Switched popover list rendering to `LazyVStack` for better scrolling and refresh performance
+- Tuned status item behavior for snappier interaction (fixed square slot, reduced open/close overhead)
+
+### Fixed
+- Removed duplicate menu refresh paths triggered during scan completion and preferences updates
+
 ## [2.0.4] - 2026-03-03
 
 ### Added
