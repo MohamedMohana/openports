@@ -1,7 +1,7 @@
-import Foundation
-import OpenPortsCore
 import AppKit
 import Combine
+import Foundation
+import OpenPortsCore
 
 /// ViewModel for managing menu state and data.
 @MainActor
@@ -14,52 +14,58 @@ class MenuViewModel: ObservableObject {
             }
         }
     }
+
     @Published private(set) var lastError: String?
+    @Published private(set) var lastUpdatedAt: Date?
 
     private let portScanner: PortScanner
     private let processResolver: ProcessResolver
     private let processManager: ProcessManager
-    private let portInfoEnhancer: PortInfoEnhancer
     private var cancellables = Set<AnyCancellable>()
-    
+    private var refreshTimer: AnyCancellable?
+
     private let userDefaults = UserDefaults.standard
+    private var refreshInterval: Double {
+        userDefaults.double(forKey: AppSettingsKey.refreshInterval)
+    }
+
     private var showSystemProcesses: Bool {
-        get { userDefaults.bool(forKey: "showSystemProcesses") }
-        set { userDefaults.set(newValue, forKey: "showSystemProcesses") }
+        userDefaults.bool(forKey: AppSettingsKey.showSystemProcesses)
     }
+
     private var groupByCategory: Bool {
-        get { userDefaults.bool(forKey: "groupByCategory") }
-        set { userDefaults.set(newValue, forKey: "groupByCategory") }
+        userDefaults.bool(forKey: AppSettingsKey.groupByCategory)
     }
+
     private var groupByProcess: Bool {
-        get { userDefaults.bool(forKey: "groupByProcess") }
-        set { userDefaults.set(newValue, forKey: "groupByProcess") }
+        userDefaults.bool(forKey: AppSettingsKey.groupByProcess)
     }
-    
+
     var statusItemController: StatusItemController?
-    
+
     init(
         portScanner: PortScanner,
         processResolver: ProcessResolver,
-        processManager: ProcessManager
+        processManager: ProcessManager,
     ) {
         self.portScanner = portScanner
         self.processResolver = processResolver
         self.processManager = processManager
-        self.portInfoEnhancer = PortInfoEnhancer()
+        AppSettings.registerDefaults(userDefaults: userDefaults)
 
         setupNotifications()
+        configureRefreshTimer()
         // Note: Initial refresh is triggered by AppDelegate after statusItemController is set
         AppLogger.shared.log("MenuViewModel initialized")
     }
-    
+
     private func setupNotifications() {
         NotificationCenter.default.publisher(for: .refreshPorts)
             .sink { [weak self] _ in
                 self?.refreshPorts()
             }
             .store(in: &cancellables)
-        
+
         NotificationCenter.default.publisher(for: .terminatePort)
             .sink { [weak self] notification in
                 if let pid = notification.object as? Int {
@@ -69,7 +75,7 @@ class MenuViewModel: ObservableObject {
                 }
             }
             .store(in: &cancellables)
-        
+
         NotificationCenter.default.publisher(for: .forceKill)
             .sink { [weak self] notification in
                 if let pid = notification.object as? Int {
@@ -79,49 +85,61 @@ class MenuViewModel: ObservableObject {
                 }
             }
             .store(in: &cancellables)
-        
+
         // Observe preference changes from PreferencesView
         NotificationCenter.default.publisher(for: .preferenceChanged)
             .sink { [weak self] notification in
                 if let key = notification.object as? String {
                     AppLogger.shared.log("Preference changed via notification: \(key)")
-                    self?.updateMenu()
+                    self?.handlePreferenceChange(for: key)
                 }
             }
             .store(in: &cancellables)
-        
+
         // Observe UserDefaults changes as backup
         observeUserDefaultsChanges()
     }
-    
+
     private func observeUserDefaultsChanges() {
-        // Observe UserDefaults changes to refresh menu when preferences change
-        let relevantKeys = Set([
-            "showSystemProcesses",
-            "groupByCategory",
-            "groupByProcess",
-            "refreshInterval",
-            "killWarningLevel",
-            "showNewProcessBadges",
-            "portHistoryEnabled"
-        ])
-        
-        NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+        NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification, object: userDefaults)
             .sink { [weak self] notification in
-                guard let userInfo = notification.userInfo else { return }
-                
-                // Find which key changed
-                for (key, _) in userInfo {
-                    if let keyString = key as? String, relevantKeys.contains(keyString) {
-                        AppLogger.shared.log("Preference changed: \(keyString), refreshing menu")
-                        self?.updateMenu()
-                        break
-                    }
-                }
+                guard notification.object is UserDefaults else { return }
+                self?.configureRefreshTimer()
+                self?.updateMenu()
             }
             .store(in: &cancellables)
     }
-    
+
+    private func handlePreferenceChange(for key: String) {
+        guard AppSettingsKey.trackedPreferenceKeys.contains(key) else {
+            return
+        }
+
+        if key == AppSettingsKey.refreshInterval {
+            configureRefreshTimer()
+        }
+
+        updateMenu()
+    }
+
+    private func configureRefreshTimer() {
+        refreshTimer?.cancel()
+        refreshTimer = nil
+
+        guard refreshInterval > 0 else {
+            AppLogger.shared.log("Auto-refresh disabled (Manual mode)")
+            return
+        }
+
+        AppLogger.shared.log("Auto-refresh enabled (\(Int(refreshInterval))s)")
+        refreshTimer = Timer
+            .publish(every: refreshInterval, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                self?.refreshPorts()
+            }
+    }
+
     func refreshPorts() {
         guard !isLoading else {
             AppLogger.shared.log("Already loading, skipping refresh")
@@ -133,8 +151,7 @@ class MenuViewModel: ObservableObject {
         lastError = nil
 
         Task {
-            let enhancer = PortInfoEnhancer()
-
+            let portInfoEnhancer = PortInfoEnhancer()
             AppLogger.shared.log("Calling portScanner.scanOpenPorts()")
             let result = await portScanner.scanOpenPorts()
             AppLogger.shared.log("Port scanner result - success: \(result.success), ports count: \(result.ports.count)")
@@ -145,12 +162,13 @@ class MenuViewModel: ObservableObject {
                 AppLogger.shared.log("Process resolution complete, resolved ports count: \(resolvedPorts.count)")
 
                 AppLogger.shared.log("Enhancing ports with safety and metadata")
-                let enhancedPorts = await enhancer.enhance(resolvedPorts)
+                let enhancedPorts = await portInfoEnhancer.enhance(resolvedPorts)
                 AppLogger.shared.log("Port enhancement complete, enhanced ports count: \(enhancedPorts.count)")
 
                 await MainActor.run {
                     self.ports = enhancedPorts
                     self.lastError = nil
+                    self.lastUpdatedAt = Date()
                     self.isLoading = false
                     self.updateMenu()
                 }
@@ -160,29 +178,30 @@ class MenuViewModel: ObservableObject {
                 await MainActor.run {
                     self.ports = []
                     self.lastError = errorMsg
+                    self.lastUpdatedAt = Date()
                     self.isLoading = false
                     self.updateMenu()
                 }
             }
         }
     }
-    
+
     func terminateProcess(pid: Int, signal: Signal) async {
         AppLogger.shared.log("Attempting to terminate process \(pid) with signal: \(signal.rawValue)")
-        
+
         do {
             let result = try await processManager.terminateProcess(pid: pid, signal: signal)
             AppLogger.shared.log("Process termination result: \(result)")
-            
+
             try? await Task.sleep(nanoseconds: 500_000_000)
             refreshPorts()
         } catch {
             AppLogger.shared.log("Failed to terminate process \(pid): \(error.localizedDescription)")
         }
     }
-    
+
     private func updateMenu() {
-        guard let statusItemController = statusItemController else {
+        guard let statusItemController else {
             AppLogger.shared.log("statusItemController is nil, cannot update menu")
             return
         }
@@ -191,7 +210,7 @@ class MenuViewModel: ObservableObject {
 
         // Update status bar icon first
         statusItemController.updateStatusIcon(ports: ports, hasWarnings: lastError != nil)
-        
+
         let descriptor = MenuDescriptor().build(
             ports: ports,
             searchText: "",
@@ -199,13 +218,14 @@ class MenuViewModel: ObservableObject {
             errorMessage: lastError,
             isLoading: isLoading,
             groupByCategory: groupByCategory,
-            groupByProcess: groupByProcess
+            groupByProcess: groupByProcess,
+            lastUpdatedAt: lastUpdatedAt,
         )
 
         statusItemController.updateMenu(descriptor)
         AppLogger.shared.log("Menu updated successfully")
     }
-    
+
     func toggleShowSystemProcesses() {
         updateMenu()
     }
@@ -216,7 +236,7 @@ class MenuViewModel: ObservableObject {
 
     /// Show loading state immediately without triggering a refresh
     func updateMenuWithLoadingState() {
-        guard let statusItemController = statusItemController else {
+        guard let statusItemController else {
             return
         }
 
@@ -225,7 +245,8 @@ class MenuViewModel: ObservableObject {
             searchText: "",
             showSystemProcesses: showSystemProcesses,
             errorMessage: nil,
-            isLoading: true
+            isLoading: true,
+            lastUpdatedAt: nil,
         )
         statusItemController.updateMenu(descriptor)
     }

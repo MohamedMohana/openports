@@ -4,15 +4,13 @@ cask "openports" do
   on_arm do
     url "https://github.com/MohamedMohana/openports/releases/download/v1.1.9/OpenPorts-v1.1.9.zip",
         verified: "github.com/MohamedMohana/openports/"
-    sha256 "PENDING_COMPUTATION"
+    sha256 "26a2354a9ae7936424f05ec250f99810ff9730077dcc9b01a5ff64dd3c74cb4a"
   end
   
   on_intel do
-    # Intel support coming in v2.0.0
-    # For now, show helpful message
     url "https://github.com/MohamedMohana/openports/releases/download/v1.1.9/OpenPorts-v1.1.9.zip",
         verified: "github.com/MohamedMohana/openports/"
-    sha256 "PENDING_COMPUTATION"
+    sha256 "26a2354a9ae7936424f05ec250f99810ff9730077dcc9b01a5ff64dd3c74cb4a"
   end
   
   name "OpenPorts"
@@ -35,7 +33,7 @@ cask "openports" do
     
     This is normal for open-source apps without Apple Developer accounts.
     
-    Intel Mac users: Native Intel support coming in v2.0.0!
+    Release v2.0.1 packaging is being stabilized. If installation fails, use a manual download from Releases.
     CAVEAT
   end
 end

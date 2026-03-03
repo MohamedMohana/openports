@@ -6,86 +6,74 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
-    name: Lint and Format
+    name: Lint and Format Check
     runs-on: macos-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Install SwiftLint and SwiftFormat
-        run: |
-          brew install swiftlint swiftformat
-      
-      - name: Clear SwiftFormat Cache
-        run: rm -f /Users/runner/.swiftpm/swiftformat.cache.json
-      
-      - name: Run SwiftFormat
-        run: swiftformat Sources Tests
-      
+        run: brew install swiftlint swiftformat
+
+      - name: Run SwiftFormat (Check Only)
+        run: swiftformat Sources/OpenPorts --lint
+
       - name: Run SwiftLint
-        run: swiftlint --lenient
-      
-      - name: Check for Changes
-        run: |
-          if ! git diff-files --quiet; then
-            echo "::error::Code formatting issues found. Please run 'swiftformat Sources Tests' locally."
-            git diff-files
-            exit 1
-          fi
+        run: swiftlint --strict
 
   test:
     name: Build and Test
     runs-on: macos-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Swift
         uses: swift-actions/setup-swift@v1
         with:
-          swift-version: "6.0"
-      
+          swift-version: "6.1"
+
       - name: Build
         run: swift build
-      
-      - name: Run Tests
-        run: swift test
-      
-      - name: Upload Coverage
-        if: success()
-        run: echo "Tests passed! ✅"
 
-  build-test:
-    name: Test Build (ARM64)
+      - name: Run Tests
+        run: swift test --parallel
+
+  package-smoke:
+    name: Package Smoke Test (ARM64)
     runs-on: macos-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Swift
         uses: swift-actions/setup-swift@v1
         with:
-          swift-version: "6.0"
-      
+          swift-version: "6.1"
+
       - name: Build Release
-        run: swift build -c release
-      
-      - name: Package App (Test)
+        run: swift build -c release --arch arm64
+
+      - name: Package App
         run: |
           chmod +x Scripts/package_app.sh
           ./Scripts/package_app.sh release arm64
-          ls -lh .build/release/OpenPorts.app
-      
-      - name: Verify App
+          ls -lh OpenPorts.app
+
+      - name: Verify App Bundle
         run: |
-          if [ -d ".build/release/OpenPorts.app" ]; then
-            echo "✅ App bundle created successfully"
+          if [ -d "OpenPorts.app" ]; then
+            echo "OpenPorts.app created successfully"
           else
-            echo "::error::App bundle not found"
+            echo "::error::OpenPorts.app was not created"
             exit 1
           fi

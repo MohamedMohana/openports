@@ -1,5 +1,5 @@
-import Foundation
 import AppKit
+import Foundation
 import Logging
 
 /// Service for resolving process information from PID to application details.
@@ -23,7 +23,7 @@ public actor ProcessResolver {
     /// Resolve process information for a single PortInfo entry.
     private func resolveProcessInfo(for port: PortInfo) async -> PortInfo {
         // Try to find NSRunningApplication by PID
-        if let runningApp = await findRunningApplication(for: port.pid) {
+        if let runningApp = findRunningApplication(for: port.pid) {
             return PortInfo(
                 port: port.port,
                 portProtocol: port.portProtocol,

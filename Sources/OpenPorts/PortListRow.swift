@@ -1,12 +1,12 @@
-import SwiftUI
 import OpenPortsCore
+import SwiftUI
 
 struct PortListRow: View {
     let port: PortInfo
     let onTerminate: (Bool) -> Void
-    
+
     @State private var showingKillConfirm: Bool = false
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
@@ -20,7 +20,7 @@ struct PortListRow: View {
                         .padding(.horizontal, 4)
                         .padding(.vertical, 2)
                 }
-                
+
                 VStack(alignment: .leading, spacing: 1) {
                     HStack(spacing: 4) {
                         Text(port.displayName)
@@ -33,7 +33,7 @@ struct PortListRow: View {
                                 .foregroundColor(.orange)
                         }
                     }
-                    
+
                     HStack(spacing: 4) {
                         Text("PID: \(port.pid)")
                             .font(.system(.caption))
@@ -41,7 +41,7 @@ struct PortListRow: View {
                         Spacer()
                     }
                 }
-                
+
                 if let path = port.executablePath {
                     Text(path)
                         .font(.system(.caption))
@@ -62,7 +62,7 @@ struct PortListRow: View {
         }
         .alert("Confirm Kill", isPresented: $showingKillConfirm) {
             Button("Cancel", role: .cancel) {}
-            
+
             Button("Kill Process", role: .destructive) {
                 onTerminate(false)
             }

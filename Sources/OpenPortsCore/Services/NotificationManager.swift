@@ -1,16 +1,16 @@
+import Combine
 import Foundation
 import UserNotifications
 
-import UserNotifications
-
 /// Manages smart notifications for OpenPorts
-public class NotificationManager: ObservableObject {
+@MainActor
+public final class NotificationManager: ObservableObject {
     public static let shared = NotificationManager()
     
-    @Published private(set) notificationsEnabled: Bool = true
-    @Published private(set) newPortAlerts: Bool = false
-    @Published private(set) highPortCountAlerts: Bool = true
-    @Published private(set) securityAlerts: Bool = true
+    @Published public private(set) var notificationsEnabled: Bool = true
+    @Published public private(set) var newPortAlerts: Bool = false
+    @Published public private(set) var highPortCountAlerts: Bool = true
+    @Published public private(set) var securityAlerts: Bool = true
     
     public init() {
         requestAuthorization()
