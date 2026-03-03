@@ -2,11 +2,11 @@ import Foundation
 
 /// Simple logger that captures recent log messages for debugging
 @MainActor
-final class AppLogger {
+final class AppLogger: ObservableObject {
     static let shared = AppLogger()
 
-    private(set) var logs: [String] = []
-    private let maxLogs = 100
+    @Published private(set) var logs: [String] = []
+    private let maxLogs = 400
     private let dateFormatter: DateFormatter
 
     init() {

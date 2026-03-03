@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No unreleased changes yet.
 
+## [2.0.4] - 2026-03-03
+
+### Added
+- Replaced default menu implementation with a custom SwiftUI popover control center
+- Added expandable per-port cards with richer metadata and direct action buttons
+- Added dedicated debug log window with live updates and auto-scroll toggle
+- Added shared app icon provider to unify icon usage across status, preferences, and logs
+
+### Changed
+- Unified app icon presentation across status item, preferences header, and debug logs header
+- Increased in-memory debug log retention from 100 to 400 lines
+
+### Fixed
+- Fixed long debug logs UI by making logs fully scrollable with automatic scroll-to-latest behavior
+
 ## [2.0.3] - 2026-03-03
 
 ### Changed
