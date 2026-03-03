@@ -10,8 +10,10 @@ struct PreferencesView: View {
     @AppStorage(AppSettingsKey.killWarningLevel) private var killWarningLevel = AppSettings.defaultKillWarningLevel
     @AppStorage(AppSettingsKey.showNewProcessBadges) private var showNewProcessBadges = AppSettings.defaultShowNewProcessBadges
     @AppStorage(AppSettingsKey.portHistoryEnabled) private var portHistoryEnabled = AppSettings.defaultPortHistoryEnabled
+    @AppStorage(AppSettingsKey.autoCheckForUpdates) private var autoCheckForUpdates = AppSettings.defaultAutoCheckForUpdates
 
     @State private var launchAtLoginEnabled = false
+    @ObservedObject private var appUpdateService = AppUpdateService.shared
 
     var body: some View {
         VStack(spacing: 0) {
@@ -132,6 +134,45 @@ struct PreferencesView: View {
             } header: {
                 Text("Advanced")
             }
+
+            Section {
+                Toggle("Automatically check for updates", isOn: $autoCheckForUpdates)
+                    .onChange(of: autoCheckForUpdates) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.autoCheckForUpdates)
+                    }
+
+                HStack(spacing: 10) {
+                    Button("Check for Updates") {
+                        Task {
+                            await appUpdateService.checkForUpdates()
+                        }
+                    }
+                    .disabled(appUpdateService.isBusy)
+
+                    Button("Update via Homebrew") {
+                        Task {
+                            await appUpdateService.installUpdateViaHomebrew()
+                        }
+                    }
+                    .disabled(appUpdateService.isBusy)
+
+                    Button("Release Notes") {
+                        appUpdateService.openReleasePage()
+                    }
+                }
+
+                Text(appUpdateService.statusMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Text(appUpdateService.lastCheckedMessage)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text("Updates")
+            } footer: {
+                Text("Uses GitHub releases for checks and Homebrew (`mohamedmohana/tap/openports`) for installs.")
+            }
         }
         .formStyle(.grouped)
         .padding(16)
@@ -173,6 +214,7 @@ struct PreferencesView: View {
         killWarningLevel = AppSettings.defaultKillWarningLevel
         showNewProcessBadges = AppSettings.defaultShowNewProcessBadges
         portHistoryEnabled = AppSettings.defaultPortHistoryEnabled
+        autoCheckForUpdates = AppSettings.defaultAutoCheckForUpdates
         launchAtLoginEnabled = false
         LaunchAtLoginManager.setEnabled(false)
 
