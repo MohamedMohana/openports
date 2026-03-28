@@ -101,7 +101,7 @@ jobs:
     name: Update Homebrew Tap
     needs: release
     runs-on: ubuntu-latest
-    if: github.repository == 'MohamedMohana/openports' && secrets.GH_TOKEN != ''
+    if: github.repository == 'MohamedMohana/openports'
 
     steps:
       - name: Resolve Version
