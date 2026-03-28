@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+No unreleased changes yet.
+
+## [2.1.1] - 2026-03-28
+
 ### Fixed
 - Notification alerts now keep baselines in sync across empty scans and disabled states, restoring expected new-port, security, and high-port-count behavior
 - Export action in the popover now hides when no port rows are available to export
