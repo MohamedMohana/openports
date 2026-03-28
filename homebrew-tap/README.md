@@ -23,3 +23,7 @@ brew uninstall --cask MohamedMohana/tap/openports
 ## Documentation
 
 For full documentation, visit [https://github.com/MohamedMohana/openports](https://github.com/MohamedMohana/openports).
+
+## Maintainers
+
+Tagged releases in `MohamedMohana/openports` can update this tap automatically when the source repo has a `HOMEBREW_TAP_TOKEN` secret configured. `GH_TOKEN` is still accepted as a fallback for older setups.

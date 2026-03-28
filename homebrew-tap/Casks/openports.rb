@@ -1,16 +1,16 @@
 cask "openports" do
-  version "2.1.0"
+  version "2.1.1"
 
   on_arm do
     url "https://github.com/MohamedMohana/openports/releases/download/v#{version}/OpenPorts-v#{version}-arm64.zip",
         verified: "github.com/MohamedMohana/openports/"
-    sha256 "e2966109c90e4dc36929b3d1ec58a907fd628798d58213dceb55c4040bf456b5"
+    sha256 "4ce0dc290e5a15cb053e5b2c96148fc6729ddf56c128da205aa19a8d197270c5"
   end
 
   on_intel do
     url "https://github.com/MohamedMohana/openports/releases/download/v#{version}/OpenPorts-v#{version}-intel.zip",
         verified: "github.com/MohamedMohana/openports/"
-    sha256 "59d2118f06861d77e90e020503160d232d076b79c54d5a148cb932f0c3959836"
+    sha256 "0611e6e0283ad95de2f8c833ee2d65ec79e1701b9aede9fa92c53dd6c2b6f4bc"
   end
 
   name "OpenPorts"

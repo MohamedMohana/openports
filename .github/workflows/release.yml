@@ -111,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'MohamedMohana/openports'
     env:
-      TAP_GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      TAP_GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN || secrets.GH_TOKEN }}
 
     steps:
       - name: Resolve Version
@@ -122,9 +122,13 @@ jobs:
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Skip Tap Update Without GH_TOKEN
+      - name: Skip Tap Update Without Homebrew Tap Token
         if: env.TAP_GH_TOKEN == ''
-        run: echo "GH_TOKEN is not configured; skipping Homebrew tap update."
+        run: echo "HOMEBREW_TAP_TOKEN (or legacy GH_TOKEN) is not configured; skipping Homebrew tap update."
+
+      - name: Checkout OpenPorts Repo
+        if: env.TAP_GH_TOKEN != ''
+        uses: actions/checkout@v4
 
       - name: Download Artifacts
         if: env.TAP_GH_TOKEN != ''
@@ -154,37 +158,16 @@ jobs:
       - name: Update Cask
         if: env.TAP_GH_TOKEN != ''
         run: |
-          TAG="${{ steps.version.outputs.tag }}"
-          VERSION="${{ steps.version.outputs.version }}"
-          ARM64_SHA="${{ steps.sha.outputs.arm64 }}"
-          INTEL_SHA="${{ steps.sha.outputs.intel }}"
+          chmod +x Scripts/render_homebrew_cask.sh
+          ./Scripts/render_homebrew_cask.sh \
+            "${{ steps.version.outputs.version }}" \
+            "${{ steps.sha.outputs.arm64 }}" \
+            "${{ steps.sha.outputs.intel }}" \
+            tap/Casks/openports.rb
 
-          cat > tap/Casks/openports.rb <<EOF
-          cask "openports" do
-            version "${VERSION}"
-
-            on_arm do
-              url "https://github.com/MohamedMohana/openports/releases/download/${TAG}/OpenPorts-${TAG}-arm64.zip",
-                  verified: "github.com/MohamedMohana/openports/"
-              sha256 "${ARM64_SHA}"
-            end
-
-            on_intel do
-              url "https://github.com/MohamedMohana/openports/releases/download/${TAG}/OpenPorts-${TAG}-intel.zip",
-                  verified: "github.com/MohamedMohana/openports/"
-              sha256 "${INTEL_SHA}"
-            end
-
-            name "OpenPorts"
-            desc "Smart port monitoring for Mac developers"
-            homepage "https://github.com/MohamedMohana/openports"
-
-            auto_updates false
-            depends_on macos: ">= :sonoma"
-
-            app "OpenPorts.app"
-          end
-          EOF
+      - name: Validate Cask Syntax
+        if: env.TAP_GH_TOKEN != ''
+        run: ruby -c tap/Casks/openports.rb
 
       - name: Commit and Push Tap Changes
         if: env.TAP_GH_TOKEN != ''
