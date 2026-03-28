@@ -30,7 +30,11 @@ jobs:
 
       - name: Resolve Version
         id: version
-        run: echo "value=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Build Release
         run: swift build -c release --arch "${{ matrix.swift_arch }}"
@@ -42,16 +46,16 @@ jobs:
 
       - name: Archive App
         run: |
-          zip -r "OpenPorts-${{ steps.version.outputs.value }}-${{ matrix.package_arch }}.zip" OpenPorts.app
-          shasum -a 256 "OpenPorts-${{ steps.version.outputs.value }}-${{ matrix.package_arch }}.zip" > "OpenPorts-${{ steps.version.outputs.value }}-${{ matrix.package_arch }}.sha256"
+          zip -r "OpenPorts-${{ steps.version.outputs.tag }}-${{ matrix.package_arch }}.zip" OpenPorts.app
+          shasum -a 256 "OpenPorts-${{ steps.version.outputs.tag }}-${{ matrix.package_arch }}.zip" > "OpenPorts-${{ steps.version.outputs.tag }}-${{ matrix.package_arch }}.sha256"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: OpenPorts-${{ matrix.package_arch }}
           path: |
-            OpenPorts-${{ steps.version.outputs.value }}-${{ matrix.package_arch }}.zip
-            OpenPorts-${{ steps.version.outputs.value }}-${{ matrix.package_arch }}.sha256
+            OpenPorts-${{ steps.version.outputs.tag }}-${{ matrix.package_arch }}.zip
+            OpenPorts-${{ steps.version.outputs.tag }}-${{ matrix.package_arch }}.sha256
           retention-days: 3
 
   release:
@@ -62,7 +66,11 @@ jobs:
     steps:
       - name: Resolve Version
         id: version
-        run: echo "value=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Download ARM64 Artifact
         uses: actions/download-artifact@v4
@@ -79,36 +87,47 @@ jobs:
       - name: Validate Artifacts
         run: |
           ls -lh artifacts
-          test -f "artifacts/OpenPorts-${{ steps.version.outputs.value }}-arm64.zip"
-          test -f "artifacts/OpenPorts-${{ steps.version.outputs.value }}-intel.zip"
-          test -f "artifacts/OpenPorts-${{ steps.version.outputs.value }}-arm64.sha256"
-          test -f "artifacts/OpenPorts-${{ steps.version.outputs.value }}-intel.sha256"
+          test -f "artifacts/OpenPorts-${{ steps.version.outputs.tag }}-arm64.zip"
+          test -f "artifacts/OpenPorts-${{ steps.version.outputs.tag }}-intel.zip"
+          test -f "artifacts/OpenPorts-${{ steps.version.outputs.tag }}-arm64.sha256"
+          test -f "artifacts/OpenPorts-${{ steps.version.outputs.tag }}-intel.sha256"
           cat artifacts/*.sha256
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: OpenPorts ${{ steps.version.outputs.value }}
+          name: OpenPorts v${{ steps.version.outputs.version }}
           generate_release_notes: true
-          prerelease: ${{ contains(steps.version.outputs.value, '-') }}
+          prerelease: ${{ contains(steps.version.outputs.tag, '-') }}
           files: |
-            artifacts/OpenPorts-${{ steps.version.outputs.value }}-arm64.zip
-            artifacts/OpenPorts-${{ steps.version.outputs.value }}-intel.zip
-            artifacts/OpenPorts-${{ steps.version.outputs.value }}-arm64.sha256
-            artifacts/OpenPorts-${{ steps.version.outputs.value }}-intel.sha256
+            artifacts/OpenPorts-${{ steps.version.outputs.tag }}-arm64.zip
+            artifacts/OpenPorts-${{ steps.version.outputs.tag }}-intel.zip
+            artifacts/OpenPorts-${{ steps.version.outputs.tag }}-arm64.sha256
+            artifacts/OpenPorts-${{ steps.version.outputs.tag }}-intel.sha256
 
   update-tap:
     name: Update Homebrew Tap
     needs: release
     runs-on: ubuntu-latest
     if: github.repository == 'MohamedMohana/openports'
+    env:
+      TAP_GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
     steps:
       - name: Resolve Version
         id: version
-        run: echo "value=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip Tap Update Without GH_TOKEN
+        if: env.TAP_GH_TOKEN == ''
+        run: echo "GH_TOKEN is not configured; skipping Homebrew tap update."
 
       - name: Download Artifacts
+        if: env.TAP_GH_TOKEN != ''
         uses: actions/download-artifact@v4
         with:
           pattern: OpenPorts-*
@@ -116,6 +135,7 @@ jobs:
           merge-multiple: true
 
       - name: Extract Checksums
+        if: env.TAP_GH_TOKEN != ''
         id: sha
         run: |
           ARM64_SHA=$(awk '{print $1}' artifacts/*-arm64.sha256)
@@ -124,15 +144,18 @@ jobs:
           echo "intel=${INTEL_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout Tap Repo
+        if: env.TAP_GH_TOKEN != ''
         uses: actions/checkout@v4
         with:
           repository: MohamedMohana/homebrew-tap
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ env.TAP_GH_TOKEN }}
           path: tap
 
       - name: Update Cask
+        if: env.TAP_GH_TOKEN != ''
         run: |
-          VERSION="${{ steps.version.outputs.value }}"
+          TAG="${{ steps.version.outputs.tag }}"
+          VERSION="${{ steps.version.outputs.version }}"
           ARM64_SHA="${{ steps.sha.outputs.arm64 }}"
           INTEL_SHA="${{ steps.sha.outputs.intel }}"
 
@@ -141,13 +164,13 @@ jobs:
             version "${VERSION}"
 
             on_arm do
-              url "https://github.com/MohamedMohana/openports/releases/download/${VERSION}/OpenPorts-${VERSION}-arm64.zip",
+              url "https://github.com/MohamedMohana/openports/releases/download/${TAG}/OpenPorts-${TAG}-arm64.zip",
                   verified: "github.com/MohamedMohana/openports/"
               sha256 "${ARM64_SHA}"
             end
 
             on_intel do
-              url "https://github.com/MohamedMohana/openports/releases/download/${VERSION}/OpenPorts-${VERSION}-intel.zip",
+              url "https://github.com/MohamedMohana/openports/releases/download/${TAG}/OpenPorts-${TAG}-intel.zip",
                   verified: "github.com/MohamedMohana/openports/"
               sha256 "${INTEL_SHA}"
             end
@@ -164,10 +187,11 @@ jobs:
           EOF
 
       - name: Commit and Push Tap Changes
+        if: env.TAP_GH_TOKEN != ''
         run: |
           cd tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Casks/openports.rb
-          git commit -m "Update openports to ${{ steps.version.outputs.value }}" || exit 0
+          git commit -m "Update openports to ${{ steps.version.outputs.version }}" || exit 0
           git push

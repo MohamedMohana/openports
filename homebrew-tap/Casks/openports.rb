@@ -1,39 +1,24 @@
 cask "openports" do
-  version "1.1.9"
-  
+  version "2.1.0"
+
   on_arm do
-    url "https://github.com/MohamedMohana/openports/releases/download/v1.1.9/OpenPorts-v1.1.9.zip",
+    url "https://github.com/MohamedMohana/openports/releases/download/v#{version}/OpenPorts-v#{version}-arm64.zip",
         verified: "github.com/MohamedMohana/openports/"
-    sha256 "26a2354a9ae7936424f05ec250f99810ff9730077dcc9b01a5ff64dd3c74cb4a"
+    sha256 "e2966109c90e4dc36929b3d1ec58a907fd628798d58213dceb55c4040bf456b5"
   end
-  
+
   on_intel do
-    url "https://github.com/MohamedMohana/openports/releases/download/v1.1.9/OpenPorts-v1.1.9.zip",
+    url "https://github.com/MohamedMohana/openports/releases/download/v#{version}/OpenPorts-v#{version}-intel.zip",
         verified: "github.com/MohamedMohana/openports/"
-    sha256 "26a2354a9ae7936424f05ec250f99810ff9730077dcc9b01a5ff64dd3c74cb4a"
+    sha256 "59d2118f06861d77e90e020503160d232d076b79c54d5a148cb932f0c3959836"
   end
-  
+
   name "OpenPorts"
-  desc "Smart port monitoring for Mac developers with safety ratings and real-time updates"
+  desc "Smart port monitoring for Mac developers"
   homepage "https://github.com/MohamedMohana/openports"
-  
+
   auto_updates false
   depends_on macos: ">= :sonoma"
-  
+
   app "OpenPorts.app"
-  
-  caveats do
-    <<~CAVEAT
-    On first launch, you may see a Gatekeeper security warning.
-    
-    To bypass:
-      1. Open System Settings → Privacy & Security
-      2. Find "OpenPorts was blocked from opening"
-      3. Click "Open Anyway"
-    
-    This is normal for open-source apps without Apple Developer accounts.
-    
-    Release v2.0.1 packaging is being stabilized. If installation fails, use a manual download from Releases.
-    CAVEAT
-  end
 end

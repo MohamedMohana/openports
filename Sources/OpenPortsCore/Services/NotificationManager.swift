@@ -7,8 +7,10 @@ import UserNotifications
 public final class NotificationManager: ObservableObject {
     public static let shared = NotificationManager()
 
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
     private let logger = Logger(label: "com.openports.notifications")
+    private let scheduleNotification: (UNNotificationRequest) -> Void
+    private let now: () -> Date
 
     var notificationsEnabled: Bool {
         defaults.bool(forKey: "notificationsEnabled")
@@ -31,11 +33,22 @@ public final class NotificationManager: ObservableObject {
     }
 
     private var lastNotifiedPorts: Set<Int> = []
-    private var hasBaseline = false
+    private var hasNewPortBaseline = false
+    private var isCurrentlyAbovePortThreshold = false
     private var lastPortCountNotification: Date?
     private var lastSecurityAlertSignature: String?
 
-    public init() {
+    public init(
+        defaults: UserDefaults = .standard,
+        scheduleNotification: ((UNNotificationRequest) -> Void)? = nil,
+        now: @escaping () -> Date = Date.init,
+    ) {
+        self.defaults = defaults
+        self.now = now
+        self.scheduleNotification = scheduleNotification ?? { request in
+            UNUserNotificationCenter.current().add(request)
+        }
+
         defaults.register(defaults: [
             "notificationsEnabled": false,
             "newPortAlerts": false,
@@ -56,50 +69,84 @@ public final class NotificationManager: ObservableObject {
     }
 
     public func checkForNewPorts(_ currentPorts: [PortInfo]) {
-        guard notificationsEnabled, newPortAlerts else { return }
-
         let currentPortNumbers = Set(currentPorts.map(\.port))
+        defer {
+            lastNotifiedPorts = currentPortNumbers
+            hasNewPortBaseline = true
+        }
+
+        guard notificationsEnabled, newPortAlerts else { return }
+        guard hasNewPortBaseline else { return }
+
         let newPorts = currentPortNumbers.subtracting(lastNotifiedPorts)
 
-        if !lastNotifiedPorts.isEmpty, !newPorts.isEmpty {
+        if !newPorts.isEmpty {
             for portNum in newPorts.sorted() {
                 if let port = currentPorts.first(where: { $0.port == portNum }) {
                     notifyNewPort(port: port.port, processName: port.displayName)
                 }
             }
         }
-
-        lastNotifiedPorts = currentPortNumbers
     }
 
     public func checkSecurityAlerts(_ ports: [PortInfo]) {
-        guard notificationsEnabled, securityAlerts else { return }
-
         let highRiskPorts = ports.filter {
             $0.safety == .critical && !$0.isSystemProcess
         }
 
-        let signature = highRiskPorts.map(\.port).sorted().map(String.init).joined(separator: ",")
+        let signature: String? = if highRiskPorts.isEmpty {
+            nil
+        } else {
+            highRiskPorts.map(\.port).sorted().map(String.init).joined(separator: ",")
+        }
 
-        guard !highRiskPorts.isEmpty, signature != lastSecurityAlertSignature else { return }
+        defer {
+            lastSecurityAlertSignature = signature
+        }
 
-        lastSecurityAlertSignature = signature
+        guard notificationsEnabled, securityAlerts else { return }
+        guard let signature else { return }
+        guard signature != lastSecurityAlertSignature else { return }
+
         let names = highRiskPorts.prefix(3).map { ":\($0.port) \($0.displayName)" }
         let message = "High-risk services: \(names.joined(separator: ", "))"
         notifySecurityAlert(message: message)
     }
 
     public func checkHighPortCount(_ ports: [PortInfo]) {
-        guard notificationsEnabled, highPortCountAlerts else { return }
+        let isAboveThreshold = ports.count >= portSpikeThreshold
 
-        guard ports.count >= portSpikeThreshold else { return }
-
-        if let lastNotification = lastPortCountNotification {
-            guard Date().timeIntervalSince(lastNotification) > 300 else { return }
+        guard notificationsEnabled, highPortCountAlerts else {
+            isCurrentlyAbovePortThreshold = isAboveThreshold
+            if !isAboveThreshold {
+                lastPortCountNotification = nil
+            }
+            return
         }
 
-        notifyHighPortCount(count: ports.count)
-        lastPortCountNotification = Date()
+        guard isAboveThreshold else {
+            isCurrentlyAbovePortThreshold = false
+            lastPortCountNotification = nil
+            return
+        }
+
+        let currentTime = now()
+
+        if !isCurrentlyAbovePortThreshold {
+            notifyHighPortCount(count: ports.count)
+            lastPortCountNotification = currentTime
+            isCurrentlyAbovePortThreshold = true
+            return
+        }
+
+        if let lastNotification = lastPortCountNotification {
+            guard currentTime.timeIntervalSince(lastNotification) > 300 else { return }
+            notifyHighPortCount(count: ports.count)
+            lastPortCountNotification = currentTime
+            return
+        }
+
+        lastPortCountNotification = currentTime
     }
 
     private func notifyNewPort(port: Int, processName: String) {
@@ -114,7 +161,7 @@ public final class NotificationManager: ObservableObject {
             trigger: nil,
         )
 
-        UNUserNotificationCenter.current().add(request)
+        scheduleNotification(request)
     }
 
     private func notifySecurityAlert(message: String) {
@@ -129,7 +176,7 @@ public final class NotificationManager: ObservableObject {
             trigger: nil,
         )
 
-        UNUserNotificationCenter.current().add(request)
+        scheduleNotification(request)
     }
 
     private func notifyHighPortCount(count: Int) {
@@ -144,6 +191,6 @@ public final class NotificationManager: ObservableObject {
             trigger: nil,
         )
 
-        UNUserNotificationCenter.current().add(request)
+        scheduleNotification(request)
     }
 }
