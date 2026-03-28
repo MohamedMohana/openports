@@ -14,8 +14,8 @@ No unreleased changes yet.
 ### Fixed
 - Notification alerts now keep baselines in sync across empty scans and disabled states, restoring expected new-port, security, and high-port-count behavior
 - Export action in the popover now hides when no port rows are available to export
-- Release workflow now handles tag/version mapping correctly for Homebrew and skips tap updates cleanly when `GH_TOKEN` is unavailable
-- In-repo Homebrew tap metadata now matches the published `v2.1.0` release assets
+- Release workflow now handles tag/version mapping correctly, accepts `HOMEBREW_TAP_TOKEN` with `GH_TOKEN` fallback, and skips tap updates cleanly when no tap token is configured
+- In-repo Homebrew tap metadata now matches the published `v2.1.1` release assets
 
 ## [2.1.0] - 2026-03-28
 
