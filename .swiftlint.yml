@@ -30,12 +30,13 @@ disabled_rules:
   - function_body_length
   - identifier_name
   - cyclomatic_complexity
+  - file_length
 
 excluded:
   - Pods
   - Sources/ExcludedFolder
   - Sources/ExcludedFile.swift
-  - Sources/OpenPorts/MenuViewModel.swift
+
   - .build
   - DerivedData
 

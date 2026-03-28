@@ -2,7 +2,7 @@ import Foundation
 import Logging
 
 /// Service for enhancing port information with safety, uptime, and other metadata
-public class PortInfoEnhancer {
+public actor PortInfoEnhancer {
     private let logger = Logger(label: "com.openports.portinfoenhancer")
     private let safetyAnalyzer: PortSafetyAnalyzer
     private let userDefaults: UserDefaults

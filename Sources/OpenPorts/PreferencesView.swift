@@ -11,6 +11,11 @@ struct PreferencesView: View {
     @AppStorage(AppSettingsKey.showNewProcessBadges) private var showNewProcessBadges = AppSettings.defaultShowNewProcessBadges
     @AppStorage(AppSettingsKey.portHistoryEnabled) private var portHistoryEnabled = AppSettings.defaultPortHistoryEnabled
     @AppStorage(AppSettingsKey.autoCheckForUpdates) private var autoCheckForUpdates = AppSettings.defaultAutoCheckForUpdates
+    @AppStorage(AppSettingsKey.notificationsEnabled) private var notificationsEnabled = AppSettings.defaultNotificationsEnabled
+    @AppStorage(AppSettingsKey.newPortAlerts) private var newPortAlerts = AppSettings.defaultNewPortAlerts
+    @AppStorage(AppSettingsKey.highPortCountAlerts) private var highPortCountAlerts = AppSettings.defaultHighPortCountAlerts
+    @AppStorage(AppSettingsKey.securityAlerts) private var securityAlerts = AppSettings.defaultSecurityAlerts
+    @AppStorage(AppSettingsKey.portSpikeThreshold) private var portSpikeThreshold = AppSettings.defaultPortSpikeThreshold
 
     @State private var launchAtLoginEnabled = false
     @ObservedObject private var appUpdateService = AppUpdateService.shared
@@ -136,6 +141,46 @@ struct PreferencesView: View {
             }
 
             Section {
+                Toggle("Enable notifications", isOn: $notificationsEnabled)
+                    .onChange(of: notificationsEnabled) { _, newValue in
+                        postPreferenceChange(key: AppSettingsKey.notificationsEnabled)
+                        if newValue {
+                            NotificationManager.shared.requestAuthorization()
+                        }
+                    }
+
+                if notificationsEnabled {
+                    Toggle("New port alerts", isOn: $newPortAlerts)
+                        .onChange(of: newPortAlerts) { _, _ in
+                            postPreferenceChange(key: AppSettingsKey.newPortAlerts)
+                        }
+
+                    Toggle("Security alerts", isOn: $securityAlerts)
+                        .onChange(of: securityAlerts) { _, _ in
+                            postPreferenceChange(key: AppSettingsKey.securityAlerts)
+                        }
+
+                    Toggle("High port count alerts", isOn: $highPortCountAlerts)
+                        .onChange(of: highPortCountAlerts) { _, _ in
+                            postPreferenceChange(key: AppSettingsKey.highPortCountAlerts)
+                        }
+
+                    if highPortCountAlerts {
+                        LabeledContent("Port count threshold") {
+                            Stepper("\(portSpikeThreshold)", value: $portSpikeThreshold, in: 10 ... 500, step: 10)
+                                .onChange(of: portSpikeThreshold) { _, _ in
+                                    postPreferenceChange(key: AppSettingsKey.portSpikeThreshold)
+                                }
+                        }
+                    }
+                }
+            } header: {
+                Text("Notifications")
+            } footer: {
+                Text("All notifications are disabled by default. Enable only the alerts you need.")
+            }
+
+            Section {
                 Toggle("Automatically check for updates", isOn: $autoCheckForUpdates)
                     .onChange(of: autoCheckForUpdates) { _, _ in
                         postPreferenceChange(key: AppSettingsKey.autoCheckForUpdates)
@@ -215,6 +260,11 @@ struct PreferencesView: View {
         showNewProcessBadges = AppSettings.defaultShowNewProcessBadges
         portHistoryEnabled = AppSettings.defaultPortHistoryEnabled
         autoCheckForUpdates = AppSettings.defaultAutoCheckForUpdates
+        notificationsEnabled = AppSettings.defaultNotificationsEnabled
+        newPortAlerts = AppSettings.defaultNewPortAlerts
+        highPortCountAlerts = AppSettings.defaultHighPortCountAlerts
+        securityAlerts = AppSettings.defaultSecurityAlerts
+        portSpikeThreshold = AppSettings.defaultPortSpikeThreshold
         launchAtLoginEnabled = false
         LaunchAtLoginManager.setEnabled(false)
 

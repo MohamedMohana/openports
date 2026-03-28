@@ -57,14 +57,13 @@ struct MenuDescriptor {
         groupByCategory: Bool = false,
         groupByProcess: Bool = false,
         lastUpdatedAt: Date? = nil,
+        favoritePorts: Set<Int> = [],
     ) -> MenuDescriptor {
         var entries = [MenuEntry]()
         let categorizer = PortCategorizer()
 
-        // Add refresh button at the top
         entries.append(.refreshButton)
 
-        // Show loading indicator or status
         if isLoading {
             entries.append(.text("Loading...", style: .secondary))
         } else if let error = errorMessage {
@@ -78,10 +77,8 @@ struct MenuDescriptor {
             entries.append(.text(statusText, style: .secondary))
         }
 
-        // Add divider
         entries.append(.divider)
 
-        // Filter ports based on search text and system process setting
         let filteredPorts = filterPorts(ports, searchText: searchText, showSystemProcesses: showSystemProcesses)
 
         if !isLoading {
@@ -91,48 +88,62 @@ struct MenuDescriptor {
             } else if filteredPorts.isEmpty {
                 entries.append(.text("No open ports found", style: .secondary))
             } else {
-                // Add port count
-                entries.append(.text("\(filteredPorts.count) open port(s)", style: .header))
-                entries.append(.divider)
+                let favoritePortsList = filteredPorts.filter { favoritePorts.contains($0.port) }
+                let nonFavoritePorts = filteredPorts.filter { !favoritePorts.contains($0.port) }
 
-                if groupByProcess {
-                    let groupedPorts = categorizer.groupByProcess(filteredPorts)
-                    let sortedProcesses = groupedPorts.keys.sorted { $0 < $1 }
+                if !favoritePortsList.isEmpty {
+                    entries.append(.text("★ FAVORITES (\(favoritePortsList.count))", style: .header))
+                    entries.append(.divider)
 
-                    for processName in sortedProcesses {
-                        if let portsInProcess = groupedPorts[processName] {
-                            entries.append(.text(processName, style: .header))
-                            entries.append(.divider)
-
-                            for port in portsInProcess.sorted(by: { $0.port < $1.port }) {
-                                let categorized = categorizer.categorize(port)
-                                entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
-                            }
-                        }
-                    }
-                } else if groupByCategory {
-                    // Group ports by category
-                    let groupedPorts = categorizer.groupByCategory(filteredPorts)
-                    let sortedCategories = groupedPorts.keys.sorted { $0.rawValue < $1.rawValue }
-
-                    for category in sortedCategories {
-                        if let portsInCategory = groupedPorts[category] {
-                            // Add category header
-                            entries.append(.text("\(category.icon) \(category.rawValue) - \(portsInCategory.count)", style: .header))
-                            entries.append(.divider)
-
-                            // Add port rows in this category
-                            for port in portsInCategory {
-                                let categorized = categorizer.categorize(port)
-                                entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
-                            }
-                        }
-                    }
-                } else {
-                    // Add port rows
-                    for port in filteredPorts {
+                    for port in favoritePortsList.sorted(by: { $0.port < $1.port }) {
                         let categorized = categorizer.categorize(port)
                         entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
+                    }
+
+                    if !nonFavoritePorts.isEmpty {
+                        entries.append(.divider)
+                    }
+                }
+
+                if !nonFavoritePorts.isEmpty {
+                    entries.append(.text("\(nonFavoritePorts.count) open port(s)", style: .header))
+                    entries.append(.divider)
+
+                    if groupByProcess {
+                        let groupedPorts = categorizer.groupByProcess(nonFavoritePorts)
+                        let sortedProcesses = groupedPorts.keys.sorted { $0 < $1 }
+
+                        for processName in sortedProcesses {
+                            if let portsInProcess = groupedPorts[processName] {
+                                entries.append(.text(processName, style: .header))
+                                entries.append(.divider)
+
+                                for port in portsInProcess.sorted(by: { $0.port < $1.port }) {
+                                    let categorized = categorizer.categorize(port)
+                                    entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
+                                }
+                            }
+                        }
+                    } else if groupByCategory {
+                        let groupedPorts = categorizer.groupByCategory(nonFavoritePorts)
+                        let sortedCategories = groupedPorts.keys.sorted { $0.rawValue < $1.rawValue }
+
+                        for category in sortedCategories {
+                            if let portsInCategory = groupedPorts[category] {
+                                entries.append(.text("\(category.icon) \(category.rawValue) - \(portsInCategory.count)", style: .header))
+                                entries.append(.divider)
+
+                                for port in portsInCategory {
+                                    let categorized = categorizer.categorize(port)
+                                    entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
+                                }
+                            }
+                        }
+                    } else {
+                        for port in nonFavoritePorts {
+                            let categorized = categorizer.categorize(port)
+                            entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
+                        }
                     }
                 }
             }

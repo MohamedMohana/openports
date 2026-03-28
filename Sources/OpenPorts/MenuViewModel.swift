@@ -3,7 +3,6 @@ import Combine
 import Foundation
 import OpenPortsCore
 
-/// ViewModel for managing menu state and data.
 @MainActor
 class MenuViewModel: ObservableObject {
     @Published private(set) var ports: [PortInfo] = []
@@ -17,6 +16,13 @@ class MenuViewModel: ObservableObject {
 
     @Published private(set) var lastError: String?
     @Published private(set) var lastUpdatedAt: Date?
+    @Published var searchText: String = "" {
+        didSet {
+            if oldValue != searchText {
+                updateMenu()
+            }
+        }
+    }
 
     private struct ObservedSettings: Equatable {
         let refreshInterval: Double
@@ -28,8 +34,10 @@ class MenuViewModel: ObservableObject {
     private let portScanner: PortScanner
     private let processResolver: ProcessResolver
     private let processManager: ProcessManager
+    private let portExporter: PortExporter
     private var cancellables = Set<AnyCancellable>()
     private var refreshTimer: AnyCancellable?
+    private var previousPorts: [PortInfo] = []
 
     private let userDefaults = UserDefaults.standard
     private var refreshInterval: Double {
@@ -72,12 +80,12 @@ class MenuViewModel: ObservableObject {
         self.portScanner = portScanner
         self.processResolver = processResolver
         self.processManager = processManager
+        portExporter = PortExporter()
         AppSettings.registerDefaults(userDefaults: userDefaults)
         observedSettings = currentObservedSettings()
 
         setupNotifications()
         configureRefreshTimer()
-        // Note: Initial refresh is triggered by AppDelegate after statusItemController is set
         AppLogger.shared.log("MenuViewModel initialized")
     }
 
@@ -108,7 +116,6 @@ class MenuViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        // Observe preference changes from PreferencesView
         NotificationCenter.default.publisher(for: .preferenceChanged)
             .sink { [weak self] notification in
                 if let key = notification.object as? String {
@@ -118,7 +125,6 @@ class MenuViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        // Observe UserDefaults changes as backup
         observeUserDefaultsChanges()
     }
 
@@ -224,10 +230,12 @@ class MenuViewModel: ObservableObject {
                 AppLogger.shared.log("Port enhancement complete, enhanced ports count: \(enhancedPorts.count)")
 
                 await MainActor.run {
+                    self.previousPorts = self.ports
                     self.ports = enhancedPorts
                     self.lastError = nil
                     self.lastUpdatedAt = Date()
                     self.isLoading = false
+                    self.checkNotifications()
                 }
             } else {
                 let errorMsg = result.error ?? "Unknown error"
@@ -240,6 +248,13 @@ class MenuViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    private func checkNotifications() {
+        let notificationManager = NotificationManager.shared
+        notificationManager.checkForNewPorts(ports)
+        notificationManager.checkSecurityAlerts(ports)
+        notificationManager.checkHighPortCount(ports)
     }
 
     func terminateProcess(pid: Int, signal: Signal) async {
@@ -256,6 +271,24 @@ class MenuViewModel: ObservableObject {
         }
     }
 
+    func toggleFavorite(port: Int) {
+        FavoritesManager.shared.toggleFavorite(port)
+        updateMenu()
+    }
+
+    func exportPorts(format: ExportFormat) {
+        Task {
+            let content = await portExporter.export(ports: ports, format: format)
+            guard let fileURL = await portExporter.saveToFile(content, filename: "export", format: format) else {
+                AppLogger.shared.error("Failed to save export file")
+                return
+            }
+
+            NSWorkspace.shared.activateFileViewerSelecting([fileURL])
+            AppLogger.shared.log("Exported ports as \(format.rawValue) to \(fileURL.path)")
+        }
+    }
+
     private func updateMenu() {
         guard let statusItemController else {
             AppLogger.shared.log("statusItemController is nil, cannot update menu")
@@ -264,21 +297,23 @@ class MenuViewModel: ObservableObject {
 
         AppLogger.shared.log("Updating menu with \(ports.count) ports, error: \(lastError ?? "none")")
 
-        // Update status bar icon first
         statusItemController.updateStatusIcon(ports: ports, hasWarnings: lastError != nil)
 
+        let favorites = FavoritesManager.shared.favorites
         let descriptor = MenuDescriptor().build(
             ports: ports,
-            searchText: "",
+            searchText: searchText,
             showSystemProcesses: showSystemProcesses,
             errorMessage: lastError,
             isLoading: isLoading,
             groupByCategory: groupByCategory,
             groupByProcess: groupByProcess,
             lastUpdatedAt: lastUpdatedAt,
+            favoritePorts: favorites,
         )
 
         statusItemController.updateMenu(descriptor)
+        statusItemController.updateFavoritePorts(favorites)
         AppLogger.shared.log("Menu updated successfully")
     }
 
@@ -290,7 +325,6 @@ class MenuViewModel: ObservableObject {
         updateMenu()
     }
 
-    /// Show loading state immediately without triggering a refresh
     func updateMenuWithLoadingState() {
         guard let statusItemController else {
             return

@@ -13,6 +13,11 @@ enum AppSettingsKey {
     static let autoCheckForUpdates = "autoCheckForUpdates"
     static let lastUpdateCheckTimestamp = "lastUpdateCheckTimestamp"
     static let lastNotifiedUpdateVersion = "lastNotifiedUpdateVersion"
+    static let notificationsEnabled = "notificationsEnabled"
+    static let newPortAlerts = "newPortAlerts"
+    static let highPortCountAlerts = "highPortCountAlerts"
+    static let securityAlerts = "securityAlerts"
+    static let portSpikeThreshold = "portSpikeThreshold"
 
     static let trackedPreferenceKeys: Set<String> = [
         refreshInterval,
@@ -24,6 +29,11 @@ enum AppSettingsKey {
         showNewProcessBadges,
         portHistoryEnabled,
         autoCheckForUpdates,
+        notificationsEnabled,
+        newPortAlerts,
+        highPortCountAlerts,
+        securityAlerts,
+        portSpikeThreshold,
     ]
 }
 
@@ -39,6 +49,11 @@ enum AppSettings {
     static let defaultAutoCheckForUpdates = true
     static let defaultLastUpdateCheckTimestamp: Double = 0
     static let defaultLastNotifiedUpdateVersion = ""
+    static let defaultNotificationsEnabled = false
+    static let defaultNewPortAlerts = false
+    static let defaultHighPortCountAlerts = false
+    static let defaultSecurityAlerts = false
+    static let defaultPortSpikeThreshold = 50
 
     static func registerDefaults(userDefaults: UserDefaults = .standard) {
         userDefaults.register(defaults: [
@@ -53,6 +68,11 @@ enum AppSettings {
             AppSettingsKey.autoCheckForUpdates: defaultAutoCheckForUpdates,
             AppSettingsKey.lastUpdateCheckTimestamp: defaultLastUpdateCheckTimestamp,
             AppSettingsKey.lastNotifiedUpdateVersion: defaultLastNotifiedUpdateVersion,
+            AppSettingsKey.notificationsEnabled: defaultNotificationsEnabled,
+            AppSettingsKey.newPortAlerts: defaultNewPortAlerts,
+            AppSettingsKey.highPortCountAlerts: defaultHighPortCountAlerts,
+            AppSettingsKey.securityAlerts: defaultSecurityAlerts,
+            AppSettingsKey.portSpikeThreshold: defaultPortSpikeThreshold,
         ])
     }
 }

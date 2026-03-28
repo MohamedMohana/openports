@@ -1,34 +1,108 @@
 import Combine
 import Foundation
+import Logging
 import UserNotifications
 
-/// Manages smart notifications for OpenPorts
 @MainActor
 public final class NotificationManager: ObservableObject {
     public static let shared = NotificationManager()
 
-    @Published public private(set) var notificationsEnabled: Bool = true
-    @Published public private(set) var newPortAlerts: Bool = false
-    @Published public private(set) var highPortCountAlerts: Bool = true
-    @Published public private(set) var securityAlerts: Bool = true
+    private let defaults = UserDefaults.standard
+    private let logger = Logger(label: "com.openports.notifications")
 
-    public init() {
-        requestAuthorization()
+    var notificationsEnabled: Bool {
+        defaults.bool(forKey: "notificationsEnabled")
     }
 
-    private func requestAuthorization() {
+    var newPortAlerts: Bool {
+        defaults.bool(forKey: "newPortAlerts")
+    }
+
+    var highPortCountAlerts: Bool {
+        defaults.bool(forKey: "highPortCountAlerts")
+    }
+
+    var securityAlerts: Bool {
+        defaults.bool(forKey: "securityAlerts")
+    }
+
+    var portSpikeThreshold: Int {
+        defaults.integer(forKey: "portSpikeThreshold")
+    }
+
+    private var lastNotifiedPorts: Set<Int> = []
+    private var hasBaseline = false
+    private var lastPortCountNotification: Date?
+    private var lastSecurityAlertSignature: String?
+
+    public init() {
+        defaults.register(defaults: [
+            "notificationsEnabled": false,
+            "newPortAlerts": false,
+            "highPortCountAlerts": false,
+            "securityAlerts": false,
+            "portSpikeThreshold": 50,
+        ])
+    }
+
+    public func requestAuthorization() {
         UNUserNotificationCenter.current().requestAuthorization(
             options: [.alert, .sound, .badge],
-        ) { granted, _ in
+        ) { [weak self] granted, _ in
             if granted {
-                print("✅ Notifications authorized")
+                self?.logger.info("Notifications authorized")
             }
         }
     }
 
-    public func notifyNewPort(port: Int, processName: String) {
+    public func checkForNewPorts(_ currentPorts: [PortInfo]) {
         guard notificationsEnabled, newPortAlerts else { return }
 
+        let currentPortNumbers = Set(currentPorts.map(\.port))
+        let newPorts = currentPortNumbers.subtracting(lastNotifiedPorts)
+
+        if !lastNotifiedPorts.isEmpty, !newPorts.isEmpty {
+            for portNum in newPorts.sorted() {
+                if let port = currentPorts.first(where: { $0.port == portNum }) {
+                    notifyNewPort(port: port.port, processName: port.displayName)
+                }
+            }
+        }
+
+        lastNotifiedPorts = currentPortNumbers
+    }
+
+    public func checkSecurityAlerts(_ ports: [PortInfo]) {
+        guard notificationsEnabled, securityAlerts else { return }
+
+        let highRiskPorts = ports.filter {
+            $0.safety == .critical && !$0.isSystemProcess
+        }
+
+        let signature = highRiskPorts.map(\.port).sorted().map(String.init).joined(separator: ",")
+
+        guard !highRiskPorts.isEmpty, signature != lastSecurityAlertSignature else { return }
+
+        lastSecurityAlertSignature = signature
+        let names = highRiskPorts.prefix(3).map { ":\($0.port) \($0.displayName)" }
+        let message = "High-risk services: \(names.joined(separator: ", "))"
+        notifySecurityAlert(message: message)
+    }
+
+    public func checkHighPortCount(_ ports: [PortInfo]) {
+        guard notificationsEnabled, highPortCountAlerts else { return }
+
+        guard ports.count >= portSpikeThreshold else { return }
+
+        if let lastNotification = lastPortCountNotification {
+            guard Date().timeIntervalSince(lastNotification) > 300 else { return }
+        }
+
+        notifyHighPortCount(count: ports.count)
+        lastPortCountNotification = Date()
+    }
+
+    private func notifyNewPort(port: Int, processName: String) {
         let content = UNMutableNotificationContent()
         content.title = "New Port Opened"
         content.body = ":\(port) - \(processName)"
@@ -43,16 +117,14 @@ public final class NotificationManager: ObservableObject {
         UNUserNotificationCenter.current().add(request)
     }
 
-    public func notifySecurityAlert(message: String) {
-        guard notificationsEnabled, securityAlerts else { return }
-
+    private func notifySecurityAlert(message: String) {
         let content = UNMutableNotificationContent()
-        content.title = "⚠️ Security Alert"
+        content.title = "Security Alert"
         content.body = message
         content.sound = .defaultCritical
 
         let request = UNNotificationRequest(
-            identifier: UUID().uuidString,
+            identifier: "security-\(UUID().uuidString)",
             content: content,
             trigger: nil,
         )
@@ -60,12 +132,10 @@ public final class NotificationManager: ObservableObject {
         UNUserNotificationCenter.current().add(request)
     }
 
-    public func notifyHighPortCount(count: Int) {
-        guard notificationsEnabled, highPortCountAlerts else { return }
-
+    private func notifyHighPortCount(count: Int) {
         let content = UNMutableNotificationContent()
         content.title = "High Port Count"
-        content.body = "\(count) ports currently open"
+        content.body = "\(count) ports currently open (threshold: \(portSpikeThreshold))"
         content.sound = .default
 
         let request = UNNotificationRequest(
