@@ -93,32 +93,6 @@ final class ProcessManager {
 
         return false
     }
-
-    func requestAdminElevation() {
-        let script = """
-        #!/bin/bash
-        osascript -e 'tell application "System Events" to do shell script "osascript -e \\"do shell script \\" & \\"\\\\\\" & quit end\\"'
-        """
-
-        let tempDir = FileManager.default.temporaryDirectory
-        let scriptPath = tempDir.appendingPathComponent("request_auth.bash").path()
-
-        try? FileManager.default.removeItem(atPath: scriptPath)
-        try? script.write(toFile: scriptPath, atomically: true, encoding: .utf8)
-
-        let permissions = NSNumber(value: 0o755)
-        try? FileManager.default.setAttributes([.posixPermissions: permissions], ofItemAtPath: scriptPath)
-
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: scriptPath)
-
-        do {
-            try task.run()
-            task.waitUntilExit()
-        } catch {}
-
-        try? FileManager.default.removeItem(atPath: scriptPath)
-    }
 }
 
 enum Signal: String {

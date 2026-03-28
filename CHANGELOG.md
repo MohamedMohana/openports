@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No unreleased changes yet.
 
+## [2.1.0] - 2026-03-28
+
+### Added
+- Export ports to CSV, JSON, or Markdown directly from the popover footer
+- Search/filter bar in the popover for quickly finding ports by number, process, or path
+- Favorites system: star any port to pin it to a dedicated favorites section
+- Opt-in smart notifications: new port alerts, security alerts, high port count alerts (all disabled by default)
+- Notification preferences section with configurable port count threshold
+
+### Changed
+- `PortInfoEnhancer` is now an `actor`, preventing main-thread blocking during process uptime resolution
+- Notifications are disabled by default and require explicit user opt-in
+
+### Fixed
+- Removed dead code: `PortListRow.swift` (legacy UI) and `requestAdminElevation()` (broken placeholder)
+- Removed `MenuViewModel` exclusion from SwiftLint, improving code coverage
+- Notification settings are now persisted across app restarts via UserDefaults
+
 ## [2.0.5] - 2026-03-03
 
 ### Added

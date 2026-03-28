@@ -4,16 +4,21 @@ import SwiftUI
 @MainActor
 final class StatusPopoverModel: ObservableObject {
     @Published var descriptor = MenuDescriptor()
+    @Published var favoritePorts: Set<Int> = []
 }
 
 struct StatusPopoverView: View {
     @ObservedObject var model: StatusPopoverModel
+    @State private var searchText = ""
 
     let onRefresh: () -> Void
     let onViewLogs: () -> Void
     let onShowPreferences: () -> Void
     let onQuit: () -> Void
     let onTerminate: (Int, Bool) -> Void
+    let onToggleFavorite: (Int) -> Void
+    let onExport: (ExportFormat) -> Void
+    let onSearchChanged: (String) -> Void
 
     private var entries: [RenderableMenuEntry] {
         let flattenedEntries = model.descriptor.sections.flatMap(\.entries)
@@ -28,6 +33,10 @@ struct StatusPopoverView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+            Divider().overlay(Color.white.opacity(0.15))
+
+            searchBar
+
             Divider().overlay(Color.white.opacity(0.15))
 
             ScrollView {
@@ -55,6 +64,37 @@ struct StatusPopoverView: View {
             startPoint: .topLeading,
             endPoint: .bottomTrailing,
         )
+    }
+
+    private var searchBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color.white.opacity(0.45))
+
+            TextField("Filter ports...", text: $searchText)
+                .font(.system(size: 13))
+                .foregroundStyle(.white)
+                .textFieldStyle(.plain)
+                .onChange(of: searchText) { _, newValue in
+                    onSearchChanged(newValue)
+                }
+
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                    onSearchChanged("")
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.white.opacity(0.45))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(Color.white.opacity(0.06))
     }
 
     private var header: some View {
@@ -145,7 +185,9 @@ struct StatusPopoverView: View {
                 category: category,
                 technology: technology,
                 projectName: projectName,
+                isFavorite: model.favoritePorts.contains(port.port),
                 onTerminate: onTerminate,
+                onToggleFavorite: { onToggleFavorite(port.port) },
             )
 
         case .refreshButton, .viewLogsButton, .preferencesButton:
@@ -158,11 +200,34 @@ struct StatusPopoverView: View {
 
     private var footer: some View {
         HStack(spacing: 8) {
+            exportMenu
             footerButton("Logs", icon: "text.append", action: onViewLogs)
             footerButton("Prefs", icon: "slider.horizontal.3", action: onShowPreferences)
             footerButton("Quit", icon: "power", action: onQuit)
         }
         .padding(12)
+    }
+
+    private var exportMenu: some View {
+        Menu {
+            ForEach(ExportFormat.allCases, id: \.self) { format in
+                Button(format.displayName) {
+                    onExport(format)
+                }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "square.and.arrow.up")
+                Text("Export")
+            }
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
     }
 
     private func footerButton(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
@@ -208,7 +273,9 @@ private struct PopoverPortRow: View {
     let category: PortCategory?
     let technology: String?
     let projectName: String?
+    let isFavorite: Bool
     let onTerminate: (Int, Bool) -> Void
+    let onToggleFavorite: () -> Void
 
     @State private var isExpanded = false
 
@@ -279,6 +346,16 @@ private struct PopoverPortRow: View {
                     }
 
                     Spacer(minLength: 4)
+
+                    Button {
+                        onToggleFavorite()
+                    } label: {
+                        Image(systemName: isFavorite ? "star.fill" : "star")
+                            .font(.system(size: 12))
+                            .foregroundStyle(isFavorite ? Color.yellow : Color.white.opacity(0.35))
+                    }
+                    .buttonStyle(.plain)
+                    .help(isFavorite ? "Remove from favorites" : "Add to favorites")
 
                     Text(port.age.icon)
                         .font(.system(size: 12))

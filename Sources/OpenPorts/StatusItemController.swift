@@ -2,7 +2,6 @@ import AppKit
 import OpenPortsCore
 import SwiftUI
 
-/// Controller for the menu bar status item.
 @MainActor
 final class StatusItemController: NSObject {
     let statusItem: NSStatusItem
@@ -11,6 +10,7 @@ final class StatusItemController: NSObject {
     private let popoverModel = StatusPopoverModel()
     private var preferencesWindow: NSWindow?
     private var logsWindow: NSWindow?
+    private var menuViewModel: MenuViewModel?
 
     override init() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -21,13 +21,16 @@ final class StatusItemController: NSObject {
         applyUnifiedStatusIcon()
     }
 
-    /// Update the status bar icon metadata based on current port state.
     func updateStatusIcon(ports: [PortInfo], hasWarnings: Bool) {
         applyUnifiedStatusIcon()
 
         let portCount = ports.count
         let warningPrefix = hasWarnings ? "Warning - " : ""
         statusItem.button?.toolTip = "\(warningPrefix)OpenPorts - \(portCount) port\(portCount == 1 ? "" : "s") active"
+    }
+
+    func setMenuViewModel(_ viewModel: MenuViewModel) {
+        menuViewModel = viewModel
     }
 
     private func configureStatusItemButton() {
@@ -63,6 +66,15 @@ final class StatusItemController: NSObject {
             onTerminate: { [weak self] pid, forceKill in
                 self?.handleTerminate(pid: pid, forceKill: forceKill)
             },
+            onToggleFavorite: { [weak self] port in
+                self?.menuViewModel?.toggleFavorite(port: port)
+            },
+            onExport: { [weak self] format in
+                self?.menuViewModel?.exportPorts(format: format)
+            },
+            onSearchChanged: { [weak self] text in
+                self?.menuViewModel?.searchText = text
+            },
         )
 
         let hostingController = NSHostingController(rootView: rootView)
@@ -73,9 +85,12 @@ final class StatusItemController: NSObject {
         statusItem.button?.image = AppIconProvider.statusBarIcon()
     }
 
-    /// Update popover content with new descriptor data.
     func updateMenu(_ descriptor: MenuDescriptor) {
         popoverModel.descriptor = descriptor
+    }
+
+    func updateFavoritePorts(_ favorites: Set<Int>) {
+        popoverModel.favoritePorts = favorites
     }
 
     private func handleTerminate(pid: Int, forceKill: Bool) {
@@ -173,7 +188,6 @@ extension StatusItemController: NSWindowDelegate {
     }
 }
 
-/// Notification names
 extension Notification.Name {
     static let refreshPorts = Notification.Name("com.mohamedmohana.openports.refreshPorts")
     static let terminatePort = Notification.Name("com.mohamedmohana.openports.terminatePort")
