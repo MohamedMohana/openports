@@ -30,6 +30,15 @@ struct StatusPopoverView: View {
         }
     }
 
+    private var hasVisiblePortRows: Bool {
+        entries.contains { item in
+            if case .portRow = item.entry {
+                return true
+            }
+            return false
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             header
@@ -200,7 +209,9 @@ struct StatusPopoverView: View {
 
     private var footer: some View {
         HStack(spacing: 8) {
-            exportMenu
+            if hasVisiblePortRows {
+                exportMenu
+            }
             footerButton("Logs", icon: "text.append", action: onViewLogs)
             footerButton("Prefs", icon: "slider.horizontal.3", action: onShowPreferences)
             footerButton("Quit", icon: "power", action: onQuit)

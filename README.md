@@ -28,6 +28,10 @@ These are implemented and available in the app now:
 - Safety labels (critical, important, optional, user-created) with kill warnings
 - Port age and uptime indicators
 - Custom SwiftUI popover control center (replaces the old plain menu layout)
+- Lightweight search/filter for port number, process name, app name, protocol, and path
+- Favorites/watchlist with pinned ports shown in a dedicated favorites section
+- Export actions for CSV, JSON, and Markdown directly from the popover footer
+- Opt-in smart notifications for new ports, security alerts, and high port count thresholds
 - Grouping options in Preferences (by process / by category / by app)
 - Manual refresh and optional auto-refresh interval
 - Launch at login
@@ -40,14 +44,13 @@ These are implemented and available in the app now:
   - release notes shortcut
 - macOS notification when a newer OpenPorts release is detected
 
-## Not Shipped Yet (Planned)
+## Not Shipped Yet
 
-These are tracked but not released in the UI yet:
+These are intentionally still out of scope for the lightweight app:
 
-- Export actions (CSV/JSON/Markdown) in stable menu flow ([#4](https://github.com/MohamedMohana/openports/issues/4))
-- Favorites/watchlist with lightweight defaults ([#5](https://github.com/MohamedMohana/openports/issues/5))
-- Lightweight menu search/filter ([#6](https://github.com/MohamedMohana/openports/issues/6))
-- Expanded smart notifications for port events ([#7](https://github.com/MohamedMohana/openports/issues/7))
+- Optional UDP view toggle
+- Small CLI companion
+- Local-only historical summaries
 
 ## Installation
 
@@ -93,19 +96,21 @@ Current settings include:
 - Port history tracking toggle
 - Launch at login
 - Auto-check for updates
+- Notification enablement and per-alert toggles
+- High port count alert threshold
 
 ## Roadmap
 
-### v2.0.x (Current)
+### v2.1.x (Current)
 
 - [x] Stabilize CI/build/release workflow
 - [x] Native Preferences polish
 - [x] Deduplicate duplicate menu rows
 - [x] Add in-app update checks + Homebrew update action
-- [ ] Export actions (Issue [#4](https://github.com/MohamedMohana/openports/issues/4))
-- [ ] Favorites/watchlist (Issue [#5](https://github.com/MohamedMohana/openports/issues/5))
-- [ ] Lightweight search/filter (Issue [#6](https://github.com/MohamedMohana/openports/issues/6))
-- [ ] Expanded smart notifications (Issue [#7](https://github.com/MohamedMohana/openports/issues/7))
+- [x] Export actions (Issue [#4](https://github.com/MohamedMohana/openports/issues/4))
+- [x] Favorites/watchlist (Issue [#5](https://github.com/MohamedMohana/openports/issues/5))
+- [x] Lightweight search/filter (Issue [#6](https://github.com/MohamedMohana/openports/issues/6))
+- [x] Expanded smart notifications (Issue [#7](https://github.com/MohamedMohana/openports/issues/7))
 
 ### Next (Only If Lightweight)
 
