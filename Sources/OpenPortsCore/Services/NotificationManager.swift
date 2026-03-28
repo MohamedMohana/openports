@@ -31,6 +31,7 @@ public final class NotificationManager: ObservableObject {
     }
 
     private var lastNotifiedPorts: Set<Int> = []
+    private var hasBaseline = false
     private var lastPortCountNotification: Date?
     private var lastSecurityAlertSignature: String?
 
