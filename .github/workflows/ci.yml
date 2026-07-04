@@ -23,7 +23,7 @@ jobs:
         run: brew install swiftlint swiftformat
 
       - name: Run SwiftFormat (Check Only)
-        run: swiftformat Sources/OpenPorts --lint
+        run: swiftformat Sources Tests --lint
 
       - name: Run SwiftLint
         run: swiftlint --strict

@@ -12,36 +12,29 @@ opt_in_rules:
   - weak_delegate
 
 disabled_rules:
+  # Style choices delegated to SwiftFormat (see .swiftformat)
   - explicit_self
-  - trailing_whitespace
-  - vertical_whitespace
-  - line_length
   - trailing_comma
-  - implicitly_unwrapped_optional
-  - for_where
-  - trailing_closure
-  - nesting
-  - colon
-  - comma
-  - control_statement
-  - empty_count
-  - large_tuple
+  # Size/complexity metrics that would need larger refactors; revisit individually
+  - line_length
   - type_body_length
   - function_body_length
+  - file_length
   - identifier_name
   - cyclomatic_complexity
-  - file_length
+  - implicitly_unwrapped_optional
+
+# CodingKeys enums inside Decodable types are idiomatic at 2 levels deep
+nesting:
+  type_level: 2
 
 excluded:
-  - Pods
-  - Sources/ExcludedFolder
-  - Sources/ExcludedFile.swift
-
   - .build
   - DerivedData
 
 included:
   - Sources
+  - Tests
 
 allow_zero_lintable_files: false
 strict: false

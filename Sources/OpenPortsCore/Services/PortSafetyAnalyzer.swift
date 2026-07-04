@@ -76,20 +76,15 @@ public class PortSafetyAnalyzer {
             return true
         }
 
-        if let bundleID = port.bundleID {
-            for prefix in systemBundlePrefixes {
-                if bundleID.hasPrefix(prefix) {
-                    return true
-                }
-            }
+        if let bundleID = port.bundleID,
+           systemBundlePrefixes.contains(where: { bundleID.hasPrefix($0) }) {
+            return true
         }
 
         if let path = port.executablePath {
             let systemPaths = ["/System/", "/usr/sbin/", "/usr/bin/", "/sbin/"]
-            for systemPath in systemPaths {
-                if path.hasPrefix(systemPath) {
-                    return true
-                }
+            if systemPaths.contains(where: { path.hasPrefix($0) }) {
+                return true
             }
         }
 
@@ -110,23 +105,15 @@ public class PortSafetyAnalyzer {
             "elasticsearch", "influxdb", "cassandra", "vault",
         ]
 
-        for importantProcess in importantProcesses {
-            if processName.contains(importantProcess) {
-                return true
-            }
-        }
-
-        return false
+        return importantProcesses.contains(where: { processName.contains($0) })
     }
 
     /// Check if port is user-created (development servers, user apps)
     private func isUserCreated(_ port: PortInfo, isNew: Bool, uptime: TimeInterval) -> Bool {
         let processName = port.processName.lowercased()
 
-        for devProcess in devServerProcesses {
-            if processName.contains(devProcess) {
-                return true
-            }
+        if devServerProcesses.contains(where: { processName.contains($0) }) {
+            return true
         }
 
         if devServerPorts.contains(port.port) {
@@ -137,10 +124,8 @@ public class PortSafetyAnalyzer {
 
         if let path = port.executablePath {
             let userPaths = ["/Users/", "/home/"]
-            for userPath in userPaths {
-                if path.hasPrefix(userPath) {
-                    return !port.isSystemProcess
-                }
+            if userPaths.contains(where: { path.hasPrefix($0) }) {
+                return !port.isSystemProcess
             }
         }
 
