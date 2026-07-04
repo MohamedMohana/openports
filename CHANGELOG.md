@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-No unreleased changes yet.
+### Added
+- Optional UDP port view: enable "Show UDP ports" in Preferences to list bound UDP sockets alongside listening TCP ports
+- `.swiftformat` configuration so local formatting matches CI and stays in agreement with SwiftLint
+
+### Changed
+- Repository cleanup: removed the tracked compiled binary, internal progress notes, and duplicate issue templates; the Homebrew tap is no longer mirrored inside this repository
+
+### Fixed
+- Broken `ISSUE_TEMPLATE/config.yml` contact links now point to Discussions and private security reporting
 
 ## [2.1.1] - 2026-03-28
 

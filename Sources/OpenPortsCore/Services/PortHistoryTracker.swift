@@ -112,7 +112,7 @@ public class PortHistoryTracker {
 }
 
 /// Port history entry for tracking
-private struct PortHistoryEntry: Codable, Sendable {
+private struct PortHistoryEntry: Codable {
     let port: Int
     let processName: String
     let pid: Int
