@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No unreleased changes yet.
 
+## [2.5.0] - 2026-07-04
+
+### Added
+- About tab in Settings with quick links to GitHub, issue reporting, and the changelog
+- Scriptable launch-at-login: `OpenPorts --set-launch-at-login on|off` and `--launch-at-login-status`
+
+### Changed
+- Settings polished to System Settings quality: colored per-row icons, explanatory captions under every option, and clearer wording ("Confirm before terminating")
+- Updates tab rebuilt: app card with version and last-check time, a highlighted "Update Now" panel when a new version is available, and a background-check toggle
+
 ## [2.4.1] - 2026-07-04
 
 ### Fixed
