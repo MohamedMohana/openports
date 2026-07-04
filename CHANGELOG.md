@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No unreleased changes yet.
 
+## [2.4.0] - 2026-07-04
+
+### Added
+- New brand identity: a professional app icon (indigo squircle with a port-jack glyph and a green "live" pin), generated reproducibly by `Scripts/generate_icons.swift`
+- New menu bar icon: a crisp custom template glyph matching the app icon, replacing the generic toggle-switch symbol; adapts to light and dark menu bars
+- The render harness now also snapshots the Settings window and menu bar icon for visual verification
+
+### Changed
+- Preferences rebuilt as a native Settings-style window with General, Display, Notifications, and Updates tabs, replacing the single long form and its duplicated header; the app version now lives in the window footer
+
 ## [2.3.0] - 2026-07-04
 
 ### Added
