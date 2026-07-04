@@ -28,6 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuViewModel: MenuViewModel?
 
     func applicationDidFinishLaunching(_: Notification) {
+        LaunchAtLoginManager.handleCommandLineIfRequested()
         RenderHarness.runIfRequested()
 
         // Set up app to not show dock icon (menu bar only app)
