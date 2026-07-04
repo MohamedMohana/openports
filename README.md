@@ -1,148 +1,152 @@
 <div align="center">
 
+<img src="Icon.iconset/openports-256.png" width="128" alt="OpenPorts icon">
+
 # OpenPorts
 
-![OpenPorts Icon](Icon.iconset/openports-128.png)
+### The port monitor that lives in your menu bar.
 
-**Lightweight port monitor for macOS developers.**
-
-See every listening port, know which process owns it, and stop it safely — all from your menu bar.
+**See every listening port. Know exactly which process owns it. Stop it safely — in one click.**
 
 [![CI](https://github.com/MohamedMohana/openports/actions/workflows/ci.yml/badge.svg)](https://github.com/MohamedMohana/openports/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/github/release/MohamedMohana/openports.svg)](https://github.com/MohamedMohana/openports/releases)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Homebrew](https://img.shields.io/badge/homebrew-openports-orange.svg)](https://github.com/MohamedMohana/homebrew-tap)
 [![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey.svg)](https://www.apple.com/macos)
-[![Swift](https://img.shields.io/badge/Swift-6.1-orange.svg)](https://swift.org)
+[![Swift](https://img.shields.io/badge/Swift-6.1-F05138.svg?logo=swift&logoColor=white)](https://swift.org)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Architecture](docs/ARCHITECTURE.md) • [Roadmap](#roadmap) • [Contributing](#contributing)
+[Install](#install) · [Tour](#a-60-second-tour) · [CLI](#the-cli-companion) · [Architecture](docs/ARCHITECTURE.md) · [Contributing](#contributing)
+
+<br>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/popover-dark.png">
+  <img src="docs/assets/popover-light.png" width="460" alt="OpenPorts popover: listening ports with safety dots, favorites, UDP badges, uptime, and search">
+</picture>
 
 </div>
 
----
+<br>
 
-Every developer has hit it: `Error: listen EADDRINUSE: address already in use :::3000`. OpenPorts answers "what's on that port?" in one click — with the process, its safety level, and a terminate button — instead of a round trip through `lsof -i :3000` and `kill -9`.
+## The problem
 
-<div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/popover-dark.png">
-    <img src="docs/assets/popover-light.png" width="440" alt="OpenPorts popover showing listening ports with safety indicators, favorites, and search">
-  </picture>
-</div>
+```
+Error: listen EADDRINUSE: address already in use :::3000
+```
 
-## Features
+Every developer knows this moment. What follows is always the same ritual: `lsof -i :3000`, squint at the columns, copy the PID, `kill -9`, hope it wasn't Postgres.
 
-- **Live port list** — listening TCP ports (and optionally bound UDP sockets) scanned via `lsof`, deduplicated across IPv4/IPv6
-- **Process details** — PID, process name, and resolved app name/path where available
-- **Safety labels** — critical / important / optional / user-created classification with kill warnings, so you don't accidentally take down `mDNSResponder`
-- **One-click terminate** — SIGTERM by default, force-kill available, with configurable warning levels
-- **Search & filter** — match on port number, process name, app name, protocol, or path
-- **Favorites** — pin the ports you care about to a dedicated section
-- **Export** — CSV, JSON, or Markdown straight from the popover footer
-- **Smart notifications (opt-in)** — new-port alerts, security alerts, and high-port-count thresholds; everything off by default
-- **Port age & uptime** — spot the server you started 30 seconds ago vs. the one that's been up for a week
-- **Grouping** — by process, category, or app
-- **Auto-refresh** — manual by default, with 3–30 s intervals available
-- **In-app updates** — release checks plus a one-click `brew upgrade`
-- **Launch at login**, debug log window, and a native SwiftUI popover UI
-- **CLI companion** — `openports-cli` lists the same ports in your terminal (table, JSON, or CSV) and can terminate by port number with the same safety warnings
+**OpenPorts replaces that entire ritual with one click in your menu bar** — and it stops you *before* you kill something that matters.
 
-## Installation
+## Highlights
 
-### Homebrew (recommended)
+| | |
+|---|---|
+| 🔍 **Everything at a glance** — every listening TCP port (UDP optional), its process, app, PID, and uptime, deduplicated across IPv4/IPv6 | 🛡️ **Safety built in** — every port is classified *Critical / Important / Optional / User-Created*; risky kills ask for confirmation first |
+| ⚡ **One-click terminate** — graceful SIGTERM by default, Force Kill when you mean it | 🌗 **Native to the bone** — SwiftUI, follows light/dark mode, adaptive icons, zero Electron |
+| ⭐ **Favorites & search** — pin the ports you care about, filter by port, process, app, protocol, or path | 🖥️ **CLI companion** — the same engine in your terminal: `openports-cli`, with table/JSON/CSV output and safe `--kill` |
+| 🔔 **Opt-in notifications** — new-port, security, and port-count alerts; *everything off by default* | 🔒 **Private by design** — no telemetry, no accounts; the only network call is the update check you can turn off |
+| 🏷️ **Live context** — green **New** badges on fresh ports, uptime on every row, project tags for dev servers (`my-app`, `venv`) | 📤 **Export anywhere** — CSV, JSON, or Markdown in one click |
+
+## Install
 
 ```bash
 brew install --cask MohamedMohana/tap/openports
 ```
 
-### Manual download
+That's it — the cask installs both the app and the `openports-cli` terminal tool, and in-app updates keep you current.
 
-1. Download the latest release from [GitHub Releases](https://github.com/MohamedMohana/openports/releases)
-2. Extract `OpenPorts.app` and move it to `/Applications`
-3. Launch from Applications or Spotlight
+<details>
+<summary><b>Manual install & Gatekeeper note</b></summary>
 
-> **Note:** Builds are currently ad-hoc signed, so Gatekeeper shows a warning on first launch. Right-click the app → **Open** to bypass it once. If you can help with notarization, see [CONTRIBUTING.md](CONTRIBUTING.md).
+1. Download the latest zip from [Releases](https://github.com/MohamedMohana/openports/releases)
+2. Move `OpenPorts.app` to `/Applications` and launch it
 
-## Usage
+Builds are currently ad-hoc signed, so Gatekeeper shows a one-time warning: right-click the app → **Open**. For the CLI: `xattr -d com.apple.quarantine "$(brew --prefix)/bin/openports-cli"`. (Can you help us notarize? See [CONTRIBUTING.md](CONTRIBUTING.md).)
 
-1. Launch OpenPorts — the icon appears in your menu bar
-2. Click it to see the current listening ports
-3. Expand any row for PID, safety level, uptime, path, and terminate actions
-4. Open **Preferences…** for grouping, refresh, UDP, notification, and update settings
+</details>
 
-### Keyboard shortcuts
+## A 60-second tour
 
-| Shortcut | Action |
-|----------|--------|
-| `⌘R` | Refresh port list |
-| `⌘,` | Open preferences |
-| `⌘Q` | Quit OpenPorts |
+1. **Click the port icon** in your menu bar — every listening port, grouped and color-coded
+2. **Expand a row** — PID, safety level, uptime, category, executable path, and Stop / Force Kill
+3. **Star a port** to pin it to Favorites; **type to filter** by anything
+4. **⌘R** refreshes; Settings has auto-refresh from 3–30 s if you prefer hands-off
 
-### Command line
+<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/preferences-dark.png">
+  <img src="docs/assets/preferences-light.png" width="480" alt="OpenPorts Settings: toolbar tabs with launch at login, scanning, and safety options">
+</picture>
+</div>
 
-The Homebrew cask also installs `openports-cli`, a terminal companion built on the same scanning and safety analysis as the app:
+Settings covers launch at login, UDP scanning, grouping (process / category / app), terminate confirmations, notifications, and one-click Homebrew updates — every option with a plain-English description.
 
-```bash
-openports-cli                      # listening TCP ports as a table
-openports-cli --udp                # include bound UDP sockets
-openports-cli --format json        # or csv — same schema as the app's export
-openports-cli --kill 3000          # terminate the process on port 3000
-openports-cli --kill 3000 --force  # skip the confirmation prompt
+## The CLI companion
+
+The exact same scanning and safety engine, in your terminal:
+
+```console
+$ openports-cli
+PORT   PROTO  PID    PROCESS    APP             SAFETY        UPTIME
+3000   TCP    4211   node       -               User-Created  1m
+5432   TCP    80323  postgres   -               Important     1d
+5000   TCP    1081   ControlCe  Control Center  Critical      13d
+
+$ openports-cli --kill 3000        # shows the safety warning, asks, then SIGTERMs
+$ openports-cli --udp --format json | jq '.[].port'
 ```
 
-`--kill` prints the same safety classification and warning the app shows (so you know before you SIGTERM your database), asks for confirmation unless `--force` is passed, and `--signal kill` force-kills instead of the default graceful SIGTERM.
+`--format json`/`csv` matches the app's export schema, so scripts and the app always agree.
 
-> **Note:** Like the app, the CLI is ad-hoc signed. If Gatekeeper blocks the first run, clear the quarantine flag: `xattr -d com.apple.quarantine "$(brew --prefix)/bin/openports-cli"`.
+## Why not just `lsof`?
 
-## Configuration
+You absolutely can — OpenPorts uses `lsof` under the hood. What it adds:
 
-Settings are stored in `~/Library/Preferences/com.mohamedmohana.openports.plist` and managed from the Preferences window:
+- **Context**: app names, bundle resolution, uptime, and project detection instead of truncated command names
+- **Judgment**: safety classification and confirmation before you kill something load-bearing
+- **Speed**: it's already open in your menu bar, with search, favorites, and history
+- **Both worlds**: the GUI for monitoring, the CLI for scripting — one engine, consistent answers
 
-- Refresh interval (manual or 3–30 s)
-- Show system processes / show UDP ports
-- Grouping (process, category, app)
-- Kill warning level and new-process badges
-- Notification opt-ins and high-port-count threshold
-- Port history tracking, launch at login, automatic update checks
+## Privacy
 
-## How It Works
+No telemetry. No analytics. No accounts. Port data never leaves your Mac. The single outbound request is the GitHub release check — and you can turn it off in Settings.
 
-OpenPorts is a Swift Package with three targets: `OpenPortsCore`, a UI-free library that handles scanning (`lsof -nP -iTCP -sTCP:LISTEN`, plus `-iUDP` when enabled), process resolution, safety analysis, favorites, notifications, and export; `OpenPorts`, the SwiftUI menu bar app on top of it; and `OpenPortsCLI`, the `openports-cli` terminal companion built on the same core. The full picture — data flow, services, and release pipeline — is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+## Under the hood
 
-No telemetry, no network calls except the GitHub release check you can turn off. Everything stays on your machine.
+Swift 6.1, SwiftPM, macOS 14+. A strict three-target split: `OpenPortsCore` (all domain logic, no UI imports), the SwiftUI menu bar app, and the CLI — with the scan → resolve → enhance pipeline shared by both front ends. CI runs strict SwiftLint + SwiftFormat, the full test suite, and a packaging smoke test on every PR; tagged releases build both architectures, publish checksummed zips, and update the Homebrew tap automatically.
+
+Read the full story in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Roadmap
 
-Kept intentionally small — OpenPorts stays lightweight.
-
-- [x] Search, favorites, export, smart notifications (v2.1)
-- [x] Optional UDP view toggle
-- [x] Small CLI companion (`openports-cli`)
+- [x] UDP view, favorites, search, export, notifications
+- [x] CLI companion
+- [x] Native UI overhaul, brand refresh, Settings redesign
 - [ ] Local-only historical summaries
+- [ ] Signed & notarized builds ([help welcome](CONTRIBUTING.md))
 
-Have an idea that fits? [Open a feature request](https://github.com/MohamedMohana/openports/issues/new/choose).
-
-## Troubleshooting
-
-**App not updating** — use Preferences → Updates → *Check for Updates* / *Update via Homebrew*, or:
-
-```bash
-brew update && brew upgrade --cask MohamedMohana/tap/openports
-```
-
-**Permission denied on terminate** — some macOS-protected processes cannot be terminated (SIP/system restrictions). That's the OS working as intended.
+Something missing that fits a *lightweight* port monitor? [Open a feature request](https://github.com/MohamedMohana/openports/issues/new/choose).
 
 ## Contributing
-
-Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup, style, and PR guidelines.
 
 ```bash
 git clone https://github.com/MohamedMohana/openports.git
 cd openports
-swift build
-swift test
-./Scripts/lint.sh
+swift build && swift test    # 78 tests
+./Scripts/lint.sh            # the same checks CI runs
 ```
+
+Start with [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Good first contributions: port knowledge-base entries, safety classifications for more services, and localization.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+[MIT](LICENSE) — free forever, for everyone.
+
+---
+
+<div align="center">
+
+**If OpenPorts saved you a `kill -9` regret, consider giving it a ⭐ — it helps other developers find it.**
+
+</div>
