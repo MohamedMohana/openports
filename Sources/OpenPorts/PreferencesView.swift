@@ -23,40 +23,30 @@ struct PreferencesView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-            Divider()
-            form
+            TabView {
+                generalTab
+                    .tabItem { Label("General", systemImage: "gearshape") }
+                displayTab
+                    .tabItem { Label("Display", systemImage: "list.bullet.rectangle") }
+                notificationsTab
+                    .tabItem { Label("Notifications", systemImage: "bell.badge") }
+                updatesTab
+                    .tabItem { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
+            }
+            .padding(.top, 6)
+
             Divider()
             footer
         }
-        .frame(minWidth: 520, idealWidth: 560, minHeight: 520, idealHeight: 620)
+        .frame(width: 540, height: 470)
         .onAppear {
             launchAtLoginEnabled = LaunchAtLoginManager.isEnabled
         }
     }
 
-    private var header: some View {
-        HStack(alignment: .center, spacing: 12) {
-            AppIconProvider.swiftUIImage(size: 36)
-                .resizable()
-                .frame(width: 36, height: 36)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    // MARK: General
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("OpenPorts Preferences")
-                    .font(.title3.weight(.semibold))
-                Text(versionText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-    }
-
-    private var form: some View {
+    private var generalTab: some View {
         Form {
             Section {
                 LabeledContent("Auto-refresh") {
@@ -74,6 +64,15 @@ struct PreferencesView: View {
                     }
                 }
 
+                Toggle("Launch at login", isOn: $launchAtLoginEnabled)
+                    .onChange(of: launchAtLoginEnabled) { _, isEnabled in
+                        LaunchAtLoginManager.setEnabled(isEnabled)
+                    }
+            } footer: {
+                Text("Manual refresh keeps background activity lowest.")
+            }
+
+            Section("Scanning") {
                 Toggle("Show system processes", isOn: $showSystemProcesses)
                     .onChange(of: showSystemProcesses) { _, _ in
                         postPreferenceChange(key: AppSettingsKey.showSystemProcesses)
@@ -83,34 +82,6 @@ struct PreferencesView: View {
                     .onChange(of: showUDPPorts) { _, _ in
                         postPreferenceChange(key: AppSettingsKey.showUDPPorts)
                     }
-
-                Toggle("Launch at login", isOn: $launchAtLoginEnabled)
-                    .onChange(of: launchAtLoginEnabled) { _, isEnabled in
-                        LaunchAtLoginManager.setEnabled(isEnabled)
-                    }
-            } header: {
-                Text("General")
-            } footer: {
-                Text("Use Manual refresh for the lowest background activity. UDP sockets have no listening state, so enabling them shows every bound UDP endpoint.")
-            }
-
-            Section {
-                Toggle("Group by process", isOn: $groupByProcess)
-                    .onChange(of: groupByProcess) { _, _ in
-                        postPreferenceChange(key: AppSettingsKey.groupByProcess)
-                    }
-
-                Toggle("Group by category", isOn: $groupByCategory)
-                    .onChange(of: groupByCategory) { _, _ in
-                        postPreferenceChange(key: AppSettingsKey.groupByCategory)
-                    }
-
-                Toggle("Group by app", isOn: $groupPorts)
-                    .onChange(of: groupPorts) { _, _ in
-                        postPreferenceChange(key: AppSettingsKey.groupPorts)
-                    }
-            } header: {
-                Text("Organization")
             }
 
             Section {
@@ -126,26 +97,57 @@ struct PreferencesView: View {
                         postPreferenceChange(key: AppSettingsKey.killWarningLevel)
                     }
                 }
-
-                Toggle("Show new process badges", isOn: $showNewProcessBadges)
-                    .onChange(of: showNewProcessBadges) { _, _ in
-                        postPreferenceChange(key: AppSettingsKey.showNewProcessBadges)
-                    }
             } header: {
                 Text("Safety")
             } footer: {
                 Text("High-risk warnings are recommended before terminating critical or important services.")
             }
+        }
+        .formStyle(.grouped)
+    }
+
+    // MARK: Display
+
+    private var displayTab: some View {
+        Form {
+            Section("Grouping") {
+                Toggle("Group by process", isOn: $groupByProcess)
+                    .onChange(of: groupByProcess) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.groupByProcess)
+                    }
+
+                Toggle("Group by category", isOn: $groupByCategory)
+                    .onChange(of: groupByCategory) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.groupByCategory)
+                    }
+
+                Toggle("Group by app", isOn: $groupPorts)
+                    .onChange(of: groupPorts) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.groupPorts)
+                    }
+            }
 
             Section {
-                Toggle("Enable port history tracking", isOn: $portHistoryEnabled)
+                Toggle("Show new process badges", isOn: $showNewProcessBadges)
+                    .onChange(of: showNewProcessBadges) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.showNewProcessBadges)
+                    }
+
+                Toggle("Track port history", isOn: $portHistoryEnabled)
                     .onChange(of: portHistoryEnabled) { _, _ in
                         postPreferenceChange(key: AppSettingsKey.portHistoryEnabled)
                     }
-            } header: {
-                Text("Advanced")
+            } footer: {
+                Text("History is kept locally and never leaves this Mac.")
             }
+        }
+        .formStyle(.grouped)
+    }
 
+    // MARK: Notifications
+
+    private var notificationsTab: some View {
+        Form {
             Section {
                 Toggle("Enable notifications", isOn: $notificationsEnabled)
                     .onChange(of: notificationsEnabled) { _, newValue in
@@ -154,8 +156,12 @@ struct PreferencesView: View {
                             NotificationManager.shared.requestAuthorization()
                         }
                     }
+            } footer: {
+                Text("All notifications are disabled by default. Enable only the alerts you need.")
+            }
 
-                if notificationsEnabled {
+            if notificationsEnabled {
+                Section("Alerts") {
                     Toggle("New port alerts", isOn: $newPortAlerts)
                         .onChange(of: newPortAlerts) { _, _ in
                             postPreferenceChange(key: AppSettingsKey.newPortAlerts)
@@ -180,12 +186,15 @@ struct PreferencesView: View {
                         }
                     }
                 }
-            } header: {
-                Text("Notifications")
-            } footer: {
-                Text("All notifications are disabled by default. Enable only the alerts you need.")
             }
+        }
+        .formStyle(.grouped)
+    }
 
+    // MARK: Updates
+
+    private var updatesTab: some View {
+        Form {
             Section {
                 Toggle("Automatically check for updates", isOn: $autoCheckForUpdates)
                     .onChange(of: autoCheckForUpdates) { _, _ in
@@ -219,15 +228,14 @@ struct PreferencesView: View {
                 Text(appUpdateService.lastCheckedMessage)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-            } header: {
-                Text("Updates")
             } footer: {
                 Text("Uses GitHub releases for checks and Homebrew (`mohamedmohana/tap/openports`) for installs.")
             }
         }
         .formStyle(.grouped)
-        .padding(16)
     }
+
+    // MARK: Footer
 
     private var footer: some View {
         HStack {
@@ -237,19 +245,25 @@ struct PreferencesView: View {
 
             Spacer()
 
+            Text(versionText)
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+
+            Spacer()
+
             Button("Done") {
                 closeWindow()
             }
             .keyboardShortcut(.defaultAction)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
     }
 
     private var versionText: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
-        return "Version \(version) (\(build))"
+        return "OpenPorts \(version) (\(build))"
     }
 
     private func postPreferenceChange(key: String) {

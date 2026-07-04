@@ -5,7 +5,11 @@ import SwiftUI
 /// Developer tool: renders the popover with sample data to PNG files and exits.
 /// Used to verify UI changes and regenerate README screenshots without manual clicking:
 ///
-///     swift build && .build/debug/OpenPorts --render-popover docs/assets
+///     ./Scripts/package_app.sh debug arm64
+///     ./OpenPorts.app/Contents/MacOS/OpenPorts --render-popover docs/assets
+///
+/// Run from the packaged app (not the bare binary) — parts of the app need a
+/// real bundle identity.
 ///
 @MainActor
 enum RenderHarness {
@@ -17,7 +21,78 @@ enum RenderHarness {
 
         let outputDirectory = CommandLine.arguments[flagIndex + 1]
         render(to: outputDirectory)
+        renderPreferences(to: outputDirectory)
+        renderStatusIcon(to: outputDirectory)
         exit(0)
+    }
+
+    private static func renderPreferences(to directory: String) {
+        for scheme in [("light", NSAppearance.Name.aqua), ("dark", NSAppearance.Name.darkAqua)] {
+            snapshot(
+                view: AnyView(PreferencesView().background(Color(nsColor: .windowBackgroundColor))),
+                size: NSSize(width: 540, height: 470),
+                appearance: scheme.1,
+                to: "\(directory)/preferences-\(scheme.0).png",
+            )
+        }
+    }
+
+    /// Renders the menu bar icon at 4x on light and dark strips.
+    private static func renderStatusIcon(to directory: String) {
+        let icon = AppIconProvider.statusBarIcon()
+        let strip = NSImage(size: NSSize(width: 160, height: 80), flipped: false) { _ in
+            NSColor(calibratedWhite: 0.92, alpha: 1).setFill()
+            NSBezierPath(rect: NSRect(x: 0, y: 40, width: 160, height: 40)).fill()
+            NSColor(calibratedWhite: 0.12, alpha: 1).setFill()
+            NSBezierPath(rect: NSRect(x: 0, y: 0, width: 160, height: 40)).fill()
+
+            // Light menu bar: black glyph. Dark menu bar: white glyph.
+            for (yOffset, color) in [(CGFloat(45), NSColor.black), (CGFloat(5), NSColor.white)] {
+                let glyph = NSImage(size: icon.size, flipped: false) { glyphRect in
+                    icon.draw(in: glyphRect)
+                    color.set()
+                    glyphRect.fill(using: .sourceAtop)
+                    return true
+                }
+                glyph.draw(in: NSRect(x: 62, y: yOffset, width: 36, height: 30).insetBy(dx: 3, dy: 0))
+            }
+            return true
+        }
+
+        guard let tiff = strip.tiffRepresentation,
+              let rep = NSBitmapImageRep(data: tiff),
+              let data = rep.representation(using: .png, properties: [:]) else { return }
+        try? data.write(to: URL(fileURLWithPath: "\(directory)/statusbar-icon.png"))
+        print("RenderHarness: wrote \(directory)/statusbar-icon.png")
+    }
+
+    private static func snapshot(view: AnyView, size: NSSize, appearance: NSAppearance.Name, to path: String) {
+        let hosting = NSHostingView(rootView: view)
+        hosting.frame = NSRect(origin: .zero, size: size)
+
+        let window = NSWindow(
+            contentRect: hosting.frame,
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false,
+        )
+        window.appearance = NSAppearance(named: appearance)
+        window.contentView = hosting
+        window.orderFrontRegardless()
+
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.7))
+
+        hosting.layoutSubtreeIfNeeded()
+        guard let rep = hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds) else {
+            print("RenderHarness: failed to render \(path)")
+            return
+        }
+        hosting.cacheDisplay(in: hosting.bounds, to: rep)
+
+        guard let data = rep.representation(using: .png, properties: [:]) else { return }
+        try? data.write(to: URL(fileURLWithPath: path))
+        print("RenderHarness: wrote \(path)")
+        window.orderOut(nil)
     }
 
     private static func render(to directory: String) {

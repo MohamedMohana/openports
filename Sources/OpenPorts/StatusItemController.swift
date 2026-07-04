@@ -160,12 +160,12 @@ final class StatusItemController: NSObject {
 
         let hostingController = NSHostingController(rootView: PreferencesView())
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 560, height: 620),
+            contentRect: NSRect(x: 0, y: 0, width: 540, height: 470),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false,
         )
-        window.title = "OpenPorts Preferences"
+        window.title = "OpenPorts Settings"
         window.contentViewController = hostingController
         window.center()
         window.isReleasedWhenClosed = false
