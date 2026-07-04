@@ -42,7 +42,7 @@ cask "openports" do
   homepage "https://github.com/MohamedMohana/openports"
 
   auto_updates false
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "OpenPorts.app"
 end
