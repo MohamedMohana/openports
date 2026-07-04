@@ -47,7 +47,7 @@ final class StatusItemController: NSObject {
     private func configurePopover() {
         popover.behavior = .transient
         popover.animates = false
-        popover.contentSize = NSSize(width: 480, height: 620)
+        popover.contentSize = NSSize(width: 440, height: 600)
 
         let rootView = StatusPopoverView(
             model: popoverModel,
@@ -91,6 +91,12 @@ final class StatusItemController: NSObject {
 
     func updateFavoritePorts(_ favorites: Set<Int>) {
         popoverModel.favoritePorts = favorites
+    }
+
+    func updateState(portCount: Int, isLoading: Bool, lastUpdatedAt: Date?) {
+        popoverModel.portCount = portCount
+        popoverModel.isLoading = isLoading
+        popoverModel.lastUpdatedAt = lastUpdatedAt
     }
 
     private func handleTerminate(pid: Int, forceKill: Bool) {

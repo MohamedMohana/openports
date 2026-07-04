@@ -22,6 +22,13 @@ See every listening port, know which process owns it, and stop it safely — all
 
 Every developer has hit it: `Error: listen EADDRINUSE: address already in use :::3000`. OpenPorts answers "what's on that port?" in one click — with the process, its safety level, and a terminate button — instead of a round trip through `lsof -i :3000` and `kill -9`.
 
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/popover-dark.png">
+    <img src="docs/assets/popover-light.png" width="440" alt="OpenPorts popover showing listening ports with safety indicators, favorites, and search">
+  </picture>
+</div>
+
 ## Features
 
 - **Live port list** — listening TCP ports (and optionally bound UDP sockets) scanned via `lsof`, deduplicated across IPv4/IPv6

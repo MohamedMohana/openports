@@ -5,6 +5,9 @@ import SwiftUI
 final class StatusPopoverModel: ObservableObject {
     @Published var descriptor = MenuDescriptor()
     @Published var favoritePorts: Set<Int> = []
+    @Published var portCount = 0
+    @Published var isLoading = false
+    @Published var lastUpdatedAt: Date?
 }
 
 struct StatusPopoverView: View {
@@ -39,51 +42,105 @@ struct StatusPopoverView: View {
         }
     }
 
+    private var hasWarning: Bool {
+        entries.contains { item in
+            if case .text(_, style: .warning) = item.entry {
+                return true
+            }
+            return false
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             header
-            Divider().overlay(Color.white.opacity(0.15))
-
-            searchBar
-
-            Divider().overlay(Color.white.opacity(0.15))
-
-            ScrollView {
-                LazyVStack(spacing: 10) {
-                    ForEach(entries) { item in
-                        entryView(item.entry)
-                    }
-                }
-                .padding(12)
-            }
-
-            Divider().overlay(Color.white.opacity(0.15))
+            searchField
+            Divider()
+            content
+            Divider()
             footer
         }
-        .frame(width: 480, height: 620)
-        .background(background)
+        .frame(width: 440, height: 600)
     }
 
-    private var background: some View {
-        LinearGradient(
-            colors: [
-                Color(red: 0.10, green: 0.12, blue: 0.18),
-                Color(red: 0.07, green: 0.09, blue: 0.14),
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing,
-        )
+    // MARK: Header
+
+    private var header: some View {
+        HStack(spacing: 10) {
+            AppIconProvider.swiftUIImage(size: 30)
+                .resizable()
+                .frame(width: 30, height: 30)
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text("OpenPorts")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.primary)
+
+                TimelineView(.periodic(from: .now, by: 30)) { _ in
+                    Text(statusSubtitle)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+
+            Button(action: onRefresh) {
+                Group {
+                    if model.isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(width: 26, height: 26)
+                .background(Circle().fill(Color.primary.opacity(0.05)))
+                .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .disabled(model.isLoading)
+            .keyboardShortcut("r", modifiers: .command)
+            .help("Refresh (⌘R)")
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
     }
 
-    private var searchBar: some View {
-        HStack(spacing: 8) {
+    private var statusSubtitle: String {
+        if model.isLoading {
+            return "Scanning…"
+        }
+
+        var parts = ["\(model.portCount) \(model.portCount == 1 ? "port" : "ports")"]
+
+        if let date = model.lastUpdatedAt {
+            if Date().timeIntervalSince(date) < 5 {
+                parts.append("updated just now")
+            } else {
+                let formatter = RelativeDateTimeFormatter()
+                formatter.unitsStyle = .short
+                parts.append("updated \(formatter.localizedString(for: date, relativeTo: Date()))")
+            }
+        }
+
+        return parts.joined(separator: " · ")
+    }
+
+    // MARK: Search
+
+    private var searchField: some View {
+        HStack(spacing: 6) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Color.white.opacity(0.45))
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.tertiary)
 
-            TextField("Filter ports...", text: $searchText)
-                .font(.system(size: 13))
-                .foregroundStyle(.white)
+            TextField("Search ports, processes, paths…", text: $searchText)
+                .font(.system(size: 12))
                 .textFieldStyle(.plain)
                 .onChange(of: searchText) { _, newValue in
                     onSearchChanged(newValue)
@@ -95,47 +152,68 @@ struct StatusPopoverView: View {
                     onSearchChanged("")
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.white.opacity(0.45))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
+                .help("Clear search")
             }
         }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(Color.primary.opacity(0.05)),
+        )
         .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .background(Color.white.opacity(0.06))
+        .padding(.bottom, 10)
     }
 
-    private var header: some View {
-        HStack(spacing: 12) {
-            AppIconProvider.swiftUIImage(size: 34)
-                .resizable()
-                .frame(width: 34, height: 34)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    // MARK: Content
 
-            VStack(alignment: .leading, spacing: 1) {
-                Text("OpenPorts")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-                Text("Custom Control Center")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color.white.opacity(0.65))
+    @ViewBuilder
+    private var content: some View {
+        if model.isLoading, !hasVisiblePortRows {
+            stateContainer {
+                ProgressView()
+                Text("Scanning ports…")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
             }
-
-            Spacer()
-
-            Button(action: onRefresh) {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(8)
-                    .background(Color.white.opacity(0.12), in: Circle())
+        } else if !hasVisiblePortRows, !hasWarning {
+            emptyState
+        } else {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 6) {
+                    ForEach(entries) { item in
+                        entryView(item.entry)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
             }
-            .buttonStyle(.plain)
-            .help("Refresh")
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+    }
+
+    private var emptyState: some View {
+        stateContainer {
+            Image(systemName: searchText.isEmpty ? "checkmark.shield" : "magnifyingglass")
+                .font(.system(size: 26, weight: .light))
+                .foregroundStyle(.tertiary)
+            Text(searchText.isEmpty ? "No open ports" : "No matches")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.primary)
+            Text(searchText.isEmpty ? "Nothing is listening right now." : "Nothing matches “\(searchText)”.")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func stateContainer(@ViewBuilder body: () -> some View) -> some View {
+        VStack(spacing: 8) {
+            body()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func stableEntryID(for entry: MenuEntry, index: Int) -> String {
@@ -163,30 +241,26 @@ struct StatusPopoverView: View {
         case let .text(text, style):
             switch style {
             case .header:
-                Text(text.uppercased())
+                Text(text)
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color.white.opacity(0.55))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 6)
+                    .padding(.top, 8)
+                    .padding(.horizontal, 2)
             case .warning:
-                Text(text)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.orange.opacity(0.95))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            case .secondary:
-                Text(text)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color.white.opacity(0.70))
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                warningCard(text)
             default:
                 Text(text)
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(Color.white.opacity(0.85))
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
         case .divider:
-            Divider().overlay(Color.white.opacity(0.12))
+            Divider()
+                .padding(.vertical, 2)
 
         case let .portRow(port, category, technology, projectName):
             PopoverPortRow(
@@ -199,24 +273,45 @@ struct StatusPopoverView: View {
                 onToggleFavorite: { onToggleFavorite(port.port) },
             )
 
-        case .refreshButton, .viewLogsButton, .preferencesButton:
-            EmptyView()
-
-        case .button:
+        case .refreshButton, .viewLogsButton, .preferencesButton, .button:
             EmptyView()
         }
     }
 
+    private func warningCard(_ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 12))
+                .foregroundStyle(.orange)
+            Text(text)
+                .font(.system(size: 12))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.orange.opacity(0.10)),
+        )
+    }
+
+    // MARK: Footer
+
     private var footer: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 2) {
             if hasVisiblePortRows {
                 exportMenu
             }
-            footerButton("Logs", icon: "text.append", action: onViewLogs)
-            footerButton("Prefs", icon: "slider.horizontal.3", action: onShowPreferences)
-            footerButton("Quit", icon: "power", action: onQuit)
+
+            Spacer()
+
+            FooterButton(title: "Logs", icon: "doc.text", action: onViewLogs)
+            FooterButton(title: "Settings", icon: "gearshape", action: onShowPreferences)
+            FooterButton(title: "Quit", icon: "power", action: onQuit)
         }
-        .padding(12)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
     }
 
     private var exportMenu: some View {
@@ -227,33 +322,51 @@ struct StatusPopoverView: View {
                 }
             }
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: 5) {
                 Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 11, weight: .medium))
                 Text("Export")
+                    .font(.system(size: 11, weight: .medium))
             }
-            .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 6)
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Export the current port list")
     }
+}
 
-    private func footerButton(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+private struct FooterButton: View {
+    let title: String
+    let icon: String
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: 5) {
                 Image(systemName: icon)
+                    .font(.system(size: 11, weight: .medium))
                 Text(title)
+                    .font(.system(size: 11, weight: .medium))
             }
-            .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .foregroundStyle(isHovered ? .primary : .secondary)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Color.primary.opacity(isHovered ? 0.07 : 0)),
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         }
         .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 }
 
@@ -289,168 +402,203 @@ private struct PopoverPortRow: View {
     let onToggleFavorite: () -> Void
 
     @State private var isExpanded = false
+    @State private var isHovered = false
 
-    private var safetyIcon: String {
-        port.safety?.icon ?? (port.isSystemProcess ? "🔴" : "⚪")
-    }
-
-    private var riskColor: Color {
+    private var safetyColor: Color {
         if port.isSystemProcess {
-            return Color.red.opacity(0.65)
+            return .red
         }
 
         switch port.safety {
         case .critical:
-            return Color.red.opacity(0.65)
+            return .red
         case .important:
-            return Color.orange.opacity(0.65)
+            return .orange
         case .userCreated:
-            return Color.blue.opacity(0.60)
-        default:
-            return Color.white.opacity(0.12)
+            return .blue
+        case .optional:
+            return .green
+        case nil:
+            return .gray
         }
     }
 
+    private var safetyLabel: String {
+        port.safety?.rawValue ?? (port.isSystemProcess ? "System" : "Unknown")
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 0) {
             Button {
-                withAnimation(.easeInOut(duration: 0.18)) {
+                withAnimation(.easeInOut(duration: 0.15)) {
                     isExpanded.toggle()
                 }
             } label: {
-                HStack(spacing: 8) {
-                    Text(safetyIcon)
-                        .font(.system(size: 13))
-
-                    Text(":\(port.port)")
-                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(.white)
-
-                    Text(port.portProtocol.rawValue)
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(Color.white.opacity(0.78))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.white.opacity(0.12), in: Capsule())
-
-                    Text(port.displayName)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-
-                    if port.isSystemProcess {
-                        Text("System")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(Color.red.opacity(0.95))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.red.opacity(0.14), in: Capsule())
-                    }
-
-                    if let category, category == .development, let projectName, shouldShowProjectTag(projectName) {
-                        Text(projectName)
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(Color.blue.opacity(0.95))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.blue.opacity(0.16), in: Capsule())
-                    }
-
-                    Spacer(minLength: 4)
-
-                    Button {
-                        onToggleFavorite()
-                    } label: {
-                        Image(systemName: isFavorite ? "star.fill" : "star")
-                            .font(.system(size: 12))
-                            .foregroundStyle(isFavorite ? Color.yellow : Color.white.opacity(0.35))
-                    }
-                    .buttonStyle(.plain)
-                    .help(isFavorite ? "Remove from favorites" : "Add to favorites")
-
-                    Text(port.age.icon)
-                        .font(.system(size: 12))
-
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color.white.opacity(0.7))
-                }
+                collapsedRow
             }
             .buttonStyle(.plain)
 
             if isExpanded {
-                VStack(alignment: .leading, spacing: 8) {
-                    metadataLine("Safety", value: port.safety?.rawValue ?? "Unknown")
-                    metadataLine("Age", value: port.age.rawValue)
-
-                    if let uptime = port.formattedUptime {
-                        metadataLine("Uptime", value: uptime)
-                    }
-
-                    if let category {
-                        metadataLine("Category", value: category.rawValue)
-                    }
-
-                    if let technology {
-                        metadataLine("Technology", value: technology)
-                    }
-
-                    if let projectName {
-                        metadataLine("Project", value: projectName)
-                    }
-
-                    metadataLine("Process", value: port.processName)
-                    metadataLine("PID", value: String(port.pid))
-
-                    if let path = port.executablePath {
-                        Text(path)
-                            .font(.system(size: 11, weight: .regular, design: .monospaced))
-                            .foregroundStyle(Color.white.opacity(0.65))
-                            .lineLimit(2)
-                            .truncationMode(.middle)
-                    }
-
-                    HStack(spacing: 8) {
-                        Button(port.isSystemProcess ? "⚠️ Terminate (SIGTERM)" : "Terminate (SIGTERM)") {
-                            onTerminate(port.pid, false)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .tint(port.isSystemProcess ? .orange : .gray)
-
-                        Button(port.isSystemProcess ? "⚠️ Force Kill (SIGKILL)" : "Force Kill (SIGKILL)") {
-                            onTerminate(port.pid, true)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
-                        .tint(.red)
-                    }
-                }
-                .padding(.top, 2)
+                detailView
             }
         }
-        .padding(10)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.white.opacity(0.06))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(riskColor, lineWidth: 1),
-                ),
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.primary.opacity(backgroundOpacity)),
         )
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 
-    private func metadataLine(_ label: String, value: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
-            Text("\(label):")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Color.white.opacity(0.65))
+    private var backgroundOpacity: Double {
+        if isExpanded {
+            return 0.06
+        }
+        return isHovered ? 0.07 : 0.04
+    }
+
+    private var collapsedRow: some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(safetyColor)
+                .frame(width: 7, height: 7)
+                .help(safetyLabel)
+
+            Text(verbatim: ":\(port.port)")
+                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                .foregroundStyle(.primary)
+
+            if port.portProtocol == .udp {
+                tag("UDP", tint: .purple)
+            }
+
+            Text(port.displayName)
+                .font(.system(size: 12))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+
+            if port.isSystemProcess {
+                tag("System", tint: .gray)
+            }
+
+            if let category, category == .development, let projectName, shouldShowProjectTag(projectName) {
+                tag(projectName, tint: .blue)
+            }
+
+            Spacer(minLength: 8)
+
+            if let uptime = port.formattedUptime {
+                Text(uptime)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.tertiary)
+                    .help("Uptime: \(uptime) (\(port.age.rawValue))")
+            }
+
+            Button(action: onToggleFavorite) {
+                Image(systemName: isFavorite ? "star.fill" : "star")
+                    .font(.system(size: 11))
+                    .foregroundStyle(isFavorite ? Color.yellow : Color.secondary)
+            }
+            .buttonStyle(.plain)
+            .opacity(isFavorite || isHovered ? 1 : 0)
+            .help(isFavorite ? "Remove from favorites" : "Add to favorites")
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(.tertiary)
+                .rotationEffect(.degrees(isExpanded ? 90 : 0))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
+    }
+
+    private var detailView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Divider()
+                .padding(.horizontal, -10)
+
+            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 5) {
+                detailRow("Process", port.processName)
+                detailRow("PID", String(port.pid))
+                detailRow("Safety", safetyLabel)
+                detailRow("Age", port.age.rawValue)
+
+                if let category {
+                    detailRow("Category", category.rawValue)
+                }
+
+                if let technology {
+                    detailRow("Technology", technology)
+                }
+
+                if let projectName {
+                    detailRow("Project", projectName)
+                }
+            }
+
+            if let path = port.executablePath {
+                Text(path)
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .truncationMode(.middle)
+                    .textSelection(.enabled)
+            }
+
+            if port.isSystemProcess || port.safety == .critical {
+                Label("Stopping this process may affect system stability.", systemImage: "exclamationmark.triangle.fill")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.orange)
+            }
+
+            HStack(spacing: 8) {
+                Button("Stop") {
+                    onTerminate(port.pid, false)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("Send SIGTERM to PID \(port.pid)")
+
+                Button("Force Kill") {
+                    onTerminate(port.pid, true)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .tint(.red)
+                .foregroundStyle(.red)
+                .help("Send SIGKILL to PID \(port.pid)")
+
+                Spacer()
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.top, 2)
+        .padding(.bottom, 10)
+    }
+
+    private func detailRow(_ label: String, _ value: String) -> some View {
+        GridRow {
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
             Text(value)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .lineLimit(1)
-            Spacer(minLength: 0)
+                .truncationMode(.middle)
         }
+    }
+
+    private func tag(_ text: String, tint: Color) -> some View {
+        Text(text)
+            .font(.system(size: 9, weight: .semibold))
+            .foregroundStyle(tint)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1.5)
+            .background(Capsule().fill(tint.opacity(0.14)))
     }
 
     private func shouldShowProjectTag(_ projectName: String) -> Bool {
