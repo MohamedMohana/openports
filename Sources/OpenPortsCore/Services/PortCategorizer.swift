@@ -308,16 +308,26 @@ public class PortCategorizer {
         return grouped
     }
 
-    /// Group ports by process/app name
+    /// Group ports by process name (the raw executable name).
     public func groupByProcess(_ ports: [PortInfo]) -> [String: [PortInfo]] {
+        grouped(ports) { port in
+            port.processName.isEmpty ? port.displayName : port.processName
+        }
+    }
+
+    /// Group ports by app display name (resolved app name when available,
+    /// falling back to the process name).
+    public func groupByApp(_ ports: [PortInfo]) -> [String: [PortInfo]] {
+        grouped(ports) { port in
+            port.displayName.isEmpty ? port.processName : port.displayName
+        }
+    }
+
+    private func grouped(_ ports: [PortInfo], by key: (PortInfo) -> String) -> [String: [PortInfo]] {
         var grouped: [String: [PortInfo]] = [:]
 
         for port in ports {
-            let processName = port.displayName.isEmpty ? port.processName : port.displayName
-            if grouped[processName] == nil {
-                grouped[processName] = []
-            }
-            grouped[processName]?.append(port)
+            grouped[key(port), default: []].append(port)
         }
 
         return grouped

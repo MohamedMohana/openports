@@ -401,8 +401,12 @@ private struct PopoverPortRow: View {
     let onTerminate: (Int, Bool) -> Void
     let onToggleFavorite: () -> Void
 
+    @AppStorage(AppSettingsKey.killWarningLevel) private var killWarningLevel = AppSettings.defaultKillWarningLevel
+    @AppStorage(AppSettingsKey.showNewProcessBadges) private var showNewProcessBadges = AppSettings.defaultShowNewProcessBadges
+
     @State private var isExpanded = false
     @State private var isHovered = false
+    @State private var pendingForceKill: Bool?
 
     private var safetyColor: Color {
         if port.isSystemProcess {
@@ -487,6 +491,10 @@ private struct PopoverPortRow: View {
                 tag(projectName, tint: .blue)
             }
 
+            if showNewProcessBadges, port.isNew {
+                tag("New", tint: .green)
+            }
+
             Spacer(minLength: 8)
 
             if let uptime = port.formattedUptime {
@@ -556,14 +564,14 @@ private struct PopoverPortRow: View {
 
             HStack(spacing: 8) {
                 Button("Stop") {
-                    onTerminate(port.pid, false)
+                    requestTerminate(forceKill: false)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .help("Send SIGTERM to PID \(port.pid)")
 
                 Button("Force Kill") {
-                    onTerminate(port.pid, true)
+                    requestTerminate(forceKill: true)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -577,6 +585,66 @@ private struct PopoverPortRow: View {
         .padding(.horizontal, 10)
         .padding(.top, 2)
         .padding(.bottom, 10)
+        .confirmationDialog(
+            confirmationTitle,
+            isPresented: confirmationShown,
+            titleVisibility: .visible,
+        ) {
+            Button(pendingForceKill == true ? "Force Kill" : "Stop", role: .destructive) {
+                if let forceKill = pendingForceKill {
+                    onTerminate(port.pid, forceKill)
+                }
+                pendingForceKill = nil
+            }
+            Button("Cancel", role: .cancel) {
+                pendingForceKill = nil
+            }
+        } message: {
+            Text(confirmationMessage)
+        }
+    }
+
+    private var confirmationShown: Binding<Bool> {
+        Binding(
+            get: { pendingForceKill != nil },
+            set: { isShown in
+                if !isShown {
+                    pendingForceKill = nil
+                }
+            },
+        )
+    }
+
+    private var confirmationTitle: String {
+        "\(pendingForceKill == true ? "Force kill" : "Stop") \(port.displayName)?"
+    }
+
+    private var confirmationMessage: String {
+        let signal = pendingForceKill == true ? "SIGKILL" : "SIGTERM"
+        let base = "PID \(port.pid) on port \(port.port) will receive \(signal)."
+        if let warning = port.safety?.warningMessage {
+            return "\(warning)\n\n\(base)"
+        }
+        return base
+    }
+
+    private var requiresConfirmation: Bool {
+        switch killWarningLevel {
+        case .none:
+            false
+        case .all:
+            true
+        case .highRiskOnly:
+            port.isSystemProcess || port.safety == .critical || port.safety == .important
+        }
+    }
+
+    private func requestTerminate(forceKill: Bool) {
+        if requiresConfirmation {
+            pendingForceKill = forceKill
+        } else {
+            onTerminate(port.pid, forceKill)
+        }
     }
 
     private func detailRow(_ label: String, _ value: String) -> some View {

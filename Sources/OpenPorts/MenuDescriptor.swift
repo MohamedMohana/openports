@@ -56,6 +56,7 @@ struct MenuDescriptor {
         isLoading: Bool = false,
         groupByCategory: Bool = false,
         groupByProcess: Bool = false,
+        groupByApp: Bool = false,
         lastUpdatedAt _: Date? = nil,
         favoritePorts: Set<Int> = [],
     ) -> MenuDescriptor {
@@ -107,6 +108,17 @@ struct MenuDescriptor {
                     entries.append(.text(category.rawValue, style: .header))
 
                     for port in portsInCategory {
+                        entries.append(portRowEntry(for: port, categorizer: categorizer))
+                    }
+                }
+            } else if groupByApp {
+                let groupedPorts = categorizer.groupByApp(nonFavoritePorts)
+
+                for appName in groupedPorts.keys.sorted(by: <) {
+                    guard let portsInApp = groupedPorts[appName] else { continue }
+                    entries.append(.text(appName, style: .header))
+
+                    for port in portsInApp.sorted(by: { $0.port < $1.port }) {
                         entries.append(portRowEntry(for: port, categorizer: categorizer))
                     }
                 }
