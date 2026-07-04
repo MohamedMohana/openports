@@ -16,6 +16,11 @@ OpenPorts.icns
 # App bundles and archives
 OpenPorts.app
 *.zip
+*.sha256
+/OpenPorts
+
+# Homebrew tap lives in its own repository (MohamedMohana/homebrew-tap)
+homebrew-tap/
 
 # SwiftPM
 .swiftpm/configuration/registries.json
@@ -42,3 +47,7 @@ Icon?
 opencode.jsonc
 .vscode/
 .idea/
+
+# Agent/session artifacts
+.opencode/
+.claude/
