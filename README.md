@@ -37,6 +37,7 @@ Every developer has hit it: `Error: listen EADDRINUSE: address already in use ::
 - **Auto-refresh** — manual by default, with 3–30 s intervals available
 - **In-app updates** — release checks plus a one-click `brew upgrade`
 - **Launch at login**, debug log window, and a native SwiftUI popover UI
+- **CLI companion** — `openports-cli` lists the same ports in your terminal (table, JSON, or CSV) and can terminate by port number with the same safety warnings
 
 ## Installation
 
@@ -69,6 +70,22 @@ brew install --cask MohamedMohana/tap/openports
 | `⌘,` | Open preferences |
 | `⌘Q` | Quit OpenPorts |
 
+### Command line
+
+The Homebrew cask also installs `openports-cli`, a terminal companion built on the same scanning and safety analysis as the app:
+
+```bash
+openports-cli                      # listening TCP ports as a table
+openports-cli --udp                # include bound UDP sockets
+openports-cli --format json        # or csv — same schema as the app's export
+openports-cli --kill 3000          # terminate the process on port 3000
+openports-cli --kill 3000 --force  # skip the confirmation prompt
+```
+
+`--kill` prints the same safety classification and warning the app shows (so you know before you SIGTERM your database), asks for confirmation unless `--force` is passed, and `--signal kill` force-kills instead of the default graceful SIGTERM.
+
+> **Note:** Like the app, the CLI is ad-hoc signed. If Gatekeeper blocks the first run, clear the quarantine flag: `xattr -d com.apple.quarantine "$(brew --prefix)/bin/openports-cli"`.
+
 ## Configuration
 
 Settings are stored in `~/Library/Preferences/com.mohamedmohana.openports.plist` and managed from the Preferences window:
@@ -82,7 +99,7 @@ Settings are stored in `~/Library/Preferences/com.mohamedmohana.openports.plist`
 
 ## How It Works
 
-OpenPorts is a Swift Package with two targets: `OpenPortsCore`, a UI-free library that handles scanning (`lsof -nP -iTCP -sTCP:LISTEN`, plus `-iUDP` when enabled), process resolution, safety analysis, favorites, notifications, and export; and `OpenPorts`, the SwiftUI menu bar app on top of it. The full picture — data flow, services, and release pipeline — is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+OpenPorts is a Swift Package with three targets: `OpenPortsCore`, a UI-free library that handles scanning (`lsof -nP -iTCP -sTCP:LISTEN`, plus `-iUDP` when enabled), process resolution, safety analysis, favorites, notifications, and export; `OpenPorts`, the SwiftUI menu bar app on top of it; and `OpenPortsCLI`, the `openports-cli` terminal companion built on the same core. The full picture — data flow, services, and release pipeline — is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 No telemetry, no network calls except the GitHub release check you can turn off. Everything stays on your machine.
 
@@ -92,7 +109,7 @@ Kept intentionally small — OpenPorts stays lightweight.
 
 - [x] Search, favorites, export, smart notifications (v2.1)
 - [x] Optional UDP view toggle
-- [ ] Small CLI companion
+- [x] Small CLI companion (`openports-cli`)
 - [ ] Local-only historical summaries
 
 Have an idea that fits? [Open a feature request](https://github.com/MohamedMohana/openports/issues/new/choose).

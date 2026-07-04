@@ -45,6 +45,12 @@ cask "openports" do
   depends_on macos: :sonoma
 
   app "OpenPorts.app"
+  binary "openports-cli"
+
+  caveats <<~EOS
+    The openports-cli binary is ad-hoc signed. If Gatekeeper blocks it, run:
+      xattr -d com.apple.quarantine "\$(brew --prefix)/bin/openports-cli"
+  EOS
 end
 EOF
 }
