@@ -27,10 +27,13 @@ swift test
 ./Scripts/package_app.sh debug
 ```
 
+Before diving into the code, read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the target layout, data flow, and project conventions.
+
 ## Code Style
 
-- Run linting before committing: `./Scripts/lint.sh`
-- Follow existing code style (SwiftFormat and SwiftLint rules)
+- Run linting before committing: `./Scripts/lint.sh` (runs SwiftFormat in lint mode and SwiftLint in strict mode — the same checks as CI)
+- Formatting is defined by `.swiftformat`; you can auto-fix with `swiftformat Sources Tests`
+- Keep domain logic in `OpenPortsCore` (no UI imports there) and UI in the `OpenPorts` target
 - Keep functions small and focused
 - Add tests for new functionality
 
