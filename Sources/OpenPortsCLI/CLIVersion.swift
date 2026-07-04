@@ -2,5 +2,5 @@
 enum CLIVersion {
     /// Keep in sync with `MARKETING_VERSION` in `version.env`.
     /// `CLIVersionTests` fails when the two drift apart.
-    static let current = "2.4.0"
+    static let current = "2.4.1"
 }

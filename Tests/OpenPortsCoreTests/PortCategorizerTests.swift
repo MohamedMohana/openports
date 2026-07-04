@@ -51,4 +51,32 @@ final class PortCategorizerTests: XCTestCase {
         let categorized = categorizer.categorize(port)
         XCTAssertEqual(categorized.projectName, "web-client")
     }
+
+    func testGroupByProcessUsesRawProcessName() {
+        let ports = [
+            PortInfo(port: 3000, portProtocol: .tcp, pid: 1, processName: "node", appName: "My App", bundleID: nil, executablePath: nil, isSystemProcess: false),
+            PortInfo(port: 3001, portProtocol: .tcp, pid: 2, processName: "node", appName: "Other App", bundleID: nil, executablePath: nil, isSystemProcess: false),
+            PortInfo(port: 5432, portProtocol: .tcp, pid: 3, processName: "postgres", appName: nil, bundleID: nil, executablePath: nil, isSystemProcess: false),
+        ]
+
+        let grouped = categorizer.groupByProcess(ports)
+
+        XCTAssertEqual(grouped.keys.sorted(), ["node", "postgres"])
+        XCTAssertEqual(grouped["node"]?.count, 2)
+        XCTAssertEqual(grouped["postgres"]?.count, 1)
+    }
+
+    func testGroupByAppUsesResolvedAppName() {
+        let ports = [
+            PortInfo(port: 3000, portProtocol: .tcp, pid: 1, processName: "node", appName: "My App", bundleID: nil, executablePath: nil, isSystemProcess: false),
+            PortInfo(port: 3001, portProtocol: .tcp, pid: 2, processName: "node", appName: "Other App", bundleID: nil, executablePath: nil, isSystemProcess: false),
+            PortInfo(port: 5432, portProtocol: .tcp, pid: 3, processName: "postgres", appName: nil, bundleID: nil, executablePath: nil, isSystemProcess: false),
+        ]
+
+        let grouped = categorizer.groupByApp(ports)
+
+        XCTAssertEqual(grouped.keys.sorted(), ["My App", "Other App", "postgres"])
+        XCTAssertEqual(grouped["My App"]?.count, 1)
+        XCTAssertEqual(grouped["postgres"]?.count, 1)
+    }
 }

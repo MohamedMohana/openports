@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No unreleased changes yet.
 
+## [2.4.1] - 2026-07-04
+
+### Fixed
+- "Kill warning level" now actually works: Stop and Force Kill ask for confirmation (with the safety warning and target PID) according to the configured level; previously the setting was never consulted and processes were terminated immediately
+- "Show new process badges" now actually works: recently started ports get a green "New" tag in the list; previously the setting had no effect
+- "Group by app" now actually works, grouping rows by resolved app name; previously the toggle did nothing. "Group by process" now groups by the raw process name, making the two modes genuinely different
+
 ## [2.4.0] - 2026-07-04
 
 ### Added

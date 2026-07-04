@@ -30,6 +30,7 @@ class MenuViewModel: ObservableObject {
         let showUDPPorts: Bool
         let groupByCategory: Bool
         let groupByProcess: Bool
+        let groupByApp: Bool
     }
 
     private let portScanner: PortScanner
@@ -61,6 +62,10 @@ class MenuViewModel: ObservableObject {
         userDefaults.bool(forKey: AppSettingsKey.groupByProcess)
     }
 
+    private var groupByApp: Bool {
+        userDefaults.bool(forKey: AppSettingsKey.groupPorts)
+    }
+
     private let menuAffectingPreferenceKeys: Set<String> = [
         AppSettingsKey.groupPorts,
         AppSettingsKey.showSystemProcesses,
@@ -74,6 +79,7 @@ class MenuViewModel: ObservableObject {
         showUDPPorts: AppSettings.defaultShowUDPPorts,
         groupByCategory: AppSettings.defaultGroupByCategory,
         groupByProcess: AppSettings.defaultGroupByProcess,
+        groupByApp: AppSettings.defaultGroupPorts,
     )
 
     var statusItemController: StatusItemController?
@@ -184,7 +190,8 @@ class MenuViewModel: ObservableObject {
         let menuNeedsUpdate =
             currentSettings.showSystemProcesses != previousSettings.showSystemProcesses ||
             currentSettings.groupByCategory != previousSettings.groupByCategory ||
-            currentSettings.groupByProcess != previousSettings.groupByProcess
+            currentSettings.groupByProcess != previousSettings.groupByProcess ||
+            currentSettings.groupByApp != previousSettings.groupByApp
 
         if menuNeedsUpdate {
             updateMenu()
@@ -198,6 +205,7 @@ class MenuViewModel: ObservableObject {
             showUDPPorts: showUDPPorts,
             groupByCategory: groupByCategory,
             groupByProcess: groupByProcess,
+            groupByApp: groupByApp,
         )
     }
 
@@ -325,6 +333,7 @@ class MenuViewModel: ObservableObject {
             isLoading: isLoading,
             groupByCategory: groupByCategory,
             groupByProcess: groupByProcess,
+            groupByApp: groupByApp,
             lastUpdatedAt: lastUpdatedAt,
             favoritePorts: favorites,
         )
