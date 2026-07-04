@@ -8,20 +8,16 @@ final class SemanticVersionTests: XCTestCase {
         XCTAssertEqual(version?.components, [2, 0, 1])
     }
 
-    func testVersionComparisonAcrossDifferentSegmentCounts() {
-        let newer = SemanticVersion("2.0.1")
-        let older = SemanticVersion("2.0")
-        XCTAssertNotNil(newer)
-        XCTAssertNotNil(older)
-        XCTAssertTrue(newer! > older!)
+    func testVersionComparisonAcrossDifferentSegmentCounts() throws {
+        let newer = try XCTUnwrap(SemanticVersion("2.0.1"))
+        let older = try XCTUnwrap(SemanticVersion("2.0"))
+        XCTAssertTrue(newer > older)
     }
 
-    func testVersionComparisonWithMajorMinorPatch() {
-        let newer = SemanticVersion("3.1.0")
-        let older = SemanticVersion("3.0.9")
-        XCTAssertNotNil(newer)
-        XCTAssertNotNil(older)
-        XCTAssertTrue(newer! > older!)
+    func testVersionComparisonWithMajorMinorPatch() throws {
+        let newer = try XCTUnwrap(SemanticVersion("3.1.0"))
+        let older = try XCTUnwrap(SemanticVersion("3.0.9"))
+        XCTAssertTrue(newer > older)
     }
 
     func testInvalidVersionReturnsNil() {

@@ -78,6 +78,72 @@ final class PortScannerTests: XCTestCase {
         XCTAssertEqual(resolved[0].port, 8080)
     }
 
+    func testParseLsofLineTCP() async {
+        let scanner = PortScanner()
+        let line = "node      1234 mohana   23u  IPv6 0xabcdef      0t0  TCP *:3000 (LISTEN)"
+
+        let port = await scanner.parseLsofLine(line, portProtocol: .tcp)
+
+        XCTAssertNotNil(port)
+        XCTAssertEqual(port?.port, 3000)
+        XCTAssertEqual(port?.portProtocol, .tcp)
+        XCTAssertEqual(port?.pid, 1234)
+        XCTAssertEqual(port?.processName, "node")
+    }
+
+    func testParseLsofLineUDP() async {
+        let scanner = PortScanner()
+        let line = "rapportd   595 mohana    8u  IPv4 0xabcdef      0t0  UDP *:49158"
+
+        let port = await scanner.parseLsofLine(line, portProtocol: .udp)
+
+        XCTAssertNotNil(port)
+        XCTAssertEqual(port?.port, 49158)
+        XCTAssertEqual(port?.portProtocol, .udp)
+        XCTAssertEqual(port?.pid, 595)
+        XCTAssertEqual(port?.processName, "rapportd")
+    }
+
+    func testParseLsofLineSkipsConnectedUDPSocket() async {
+        let scanner = PortScanner()
+        let line = "Spotify    612 mohana  118u  IPv4 0xabcdef      0t0  UDP 192.168.1.7:60401->142.250.74.174:443"
+
+        let port = await scanner.parseLsofLine(line, portProtocol: .udp)
+
+        XCTAssertNil(port)
+    }
+
+    func testParseLsofLineSkipsWildcardUDPBinding() async {
+        let scanner = PortScanner()
+        let line = "mDNSRespo  325 _mdnsresponder 10u  IPv4 0xabcdef      0t0  UDP *:*"
+
+        let port = await scanner.parseLsofLine(line, portProtocol: .udp)
+
+        XCTAssertNil(port)
+    }
+
+    func testParseLsofLineParsesIPv6Binding() async {
+        let scanner = PortScanner()
+        let line = "ControlCe  617 mohana    9u  IPv6 0xabcdef      0t0  TCP [::1]:42050 (LISTEN)"
+
+        let port = await scanner.parseLsofLine(line, portProtocol: .tcp)
+
+        XCTAssertNotNil(port)
+        XCTAssertEqual(port?.port, 42050)
+    }
+
+    func testDeduplicationKeepsSamePortAcrossProtocols() async {
+        let scanner = PortScanner()
+        let ports: [PortInfo] = [
+            PortInfo(port: 53, portProtocol: .tcp, pid: 100, processName: "dnsmasq", appName: nil, bundleID: nil, executablePath: nil, isSystemProcess: false),
+            PortInfo(port: 53, portProtocol: .udp, pid: 100, processName: "dnsmasq", appName: nil, bundleID: nil, executablePath: nil, isSystemProcess: false),
+        ]
+
+        let deduplicated = await scanner.deduplicatePorts(ports)
+
+        XCTAssertEqual(deduplicated.count, 2)
+    }
+
     func testPortScannerDeduplicatesSamePIDAndPort() async {
         let scanner = PortScanner()
         let ports: [PortInfo] = [

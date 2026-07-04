@@ -5,6 +5,7 @@ enum AppSettingsKey {
     static let refreshInterval = "refreshInterval"
     static let groupPorts = "groupPorts"
     static let showSystemProcesses = "showSystemProcesses"
+    static let showUDPPorts = "showUDPPorts"
     static let groupByCategory = "groupByCategory"
     static let groupByProcess = "groupByProcess"
     static let killWarningLevel = "killWarningLevel"
@@ -23,6 +24,7 @@ enum AppSettingsKey {
         refreshInterval,
         groupPorts,
         showSystemProcesses,
+        showUDPPorts,
         groupByCategory,
         groupByProcess,
         killWarningLevel,
@@ -41,6 +43,7 @@ enum AppSettings {
     static let defaultRefreshInterval: Double = 0
     static let defaultGroupPorts = false
     static let defaultShowSystemProcesses = true
+    static let defaultShowUDPPorts = false
     static let defaultGroupByCategory = false
     static let defaultGroupByProcess = true
     static let defaultKillWarningLevel = KillWarningLevel.highRiskOnly
@@ -60,6 +63,7 @@ enum AppSettings {
             AppSettingsKey.refreshInterval: defaultRefreshInterval,
             AppSettingsKey.groupPorts: defaultGroupPorts,
             AppSettingsKey.showSystemProcesses: defaultShowSystemProcesses,
+            AppSettingsKey.showUDPPorts: defaultShowUDPPorts,
             AppSettingsKey.groupByCategory: defaultGroupByCategory,
             AppSettingsKey.groupByProcess: defaultGroupByProcess,
             AppSettingsKey.killWarningLevel: defaultKillWarningLevel.rawValue,

@@ -8,33 +8,53 @@ public actor PortScanner {
     private let logger = Logger(label: "com.openports.portscanner")
     private let lsofPath = "/usr/sbin/lsof"
 
-    /// Scan for open listening TCP ports.
-    public func scanOpenPorts() async -> PortScanResult {
+    /// Scan for open listening ports.
+    /// - Parameter includeUDP: When `true`, bound UDP sockets are included alongside listening TCP ports.
+    public func scanOpenPorts(includeUDP: Bool = false) async -> PortScanResult {
         guard FileManager.default.fileExists(atPath: lsofPath) else {
             logger.error("lsof not found at \(lsofPath)")
             return .failure("lsof command not found. Please ensure macOS developer tools are installed.")
         }
 
         do {
-            let output = try await runLsofCommand()
-            let ports = try parseLsofOutput(output)
-            logger.info("Found \(ports.count) open ports")
-            return PortScanResult(ports: ports, success: true, error: nil)
+            let tcpOutput = try await runLsofCommand(arguments: Self.tcpArguments)
+            var ports = try parseLsofOutput(tcpOutput, portProtocol: .tcp)
+
+            if includeUDP {
+                do {
+                    let udpOutput = try await runLsofCommand(arguments: Self.udpArguments)
+                    ports += try parseLsofOutput(udpOutput, portProtocol: .udp)
+                } catch {
+                    // A UDP failure should not hide the TCP results.
+                    logger.warning("UDP scan failed, returning TCP results only: \(error.localizedDescription)")
+                }
+            }
+
+            let deduplicatedPorts = deduplicatePorts(ports)
+            logger.info("Found \(deduplicatedPorts.count) open ports (UDP included: \(includeUDP))")
+            return PortScanResult(ports: deduplicatedPorts, success: true, error: nil)
         } catch {
             logger.error("Failed to scan ports: \(error.localizedDescription)")
             return .failure(error.localizedDescription)
         }
     }
 
+    private static let tcpArguments = [
+        "-nP", // Don't resolve hostnames, show numeric ports
+        "-iTCP", // TCP ports only
+        "-sTCP:LISTEN", // Listening TCP ports only
+    ]
+
+    private static let udpArguments = [
+        "-nP", // Don't resolve hostnames, show numeric ports
+        "-iUDP", // UDP sockets only (UDP has no LISTEN state)
+    ]
+
     /// Execute lsof command and return output.
-    private func runLsofCommand() async throws -> String {
+    private func runLsofCommand(arguments: [String]) async throws -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: lsofPath)
-        process.arguments = [
-            "-nP", // Don't resolve hostnames, show numeric ports
-            "-iTCP", // TCP ports only
-            "-sTCP:LISTEN", // Listening TCP ports only
-        ]
+        process.arguments = arguments
 
         let outputPipe = Pipe()
         let errorPipe = Pipe()
@@ -69,7 +89,7 @@ public actor PortScanner {
     /// Parse lsof output into PortInfo array.
     /// Expected lsof format: COMMAND PID USER FD TYPE DEVICE SIZE/OFF NODE NAME
     /// Example: ControlCe 617 mohana 9u IPv4 0x... 0t0 TCP *:7000 (LISTEN)
-    private func parseLsofOutput(_ output: String) throws -> [PortInfo] {
+    private func parseLsofOutput(_ output: String, portProtocol: PortInfo.PortProtocol) throws -> [PortInfo] {
         var ports: [PortInfo] = []
         let lines = output.components(separatedBy: .newlines).filter { !$0.isEmpty }
 
@@ -81,15 +101,14 @@ public actor PortScanner {
                 continue
             }
 
-            let parsedPort = parseLsofLine(line)
+            let parsedPort = parseLsofLine(line, portProtocol: portProtocol)
             if let port = parsedPort {
                 ports.append(port)
             }
         }
 
-        let deduplicatedPorts = deduplicatePorts(ports)
-        logger.info("Successfully parsed \(ports.count) ports from lsof output (\(deduplicatedPorts.count) unique)")
-        return deduplicatedPorts
+        logger.info("Successfully parsed \(ports.count) \(portProtocol.rawValue) ports from lsof output")
+        return ports
     }
 
     /// Deduplicate ports by protocol, port number, and PID.
@@ -117,7 +136,8 @@ public actor PortScanner {
     /// Parse a single line of lsof output.
     /// The NAME column can contain spaces like "127.0.0.1:8080 (LISTEN)",
     /// so we need to reconstruct it from the last columns.
-    private func parseLsofLine(_ line: String) -> PortInfo? {
+    /// Internal for testability.
+    func parseLsofLine(_ line: String, portProtocol: PortInfo.PortProtocol) -> PortInfo? {
         // Split by whitespace to get columns
         let columns = line.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
 
@@ -142,15 +162,24 @@ public actor PortScanner {
         let nameParts = columns[8...]
         let nameColumn = nameParts.joined(separator: " ")
 
+        // Skip connected sockets (e.g. "10.0.0.5:60401->142.250.74.174:443");
+        // only locally bound endpoints are of interest.
+        if nameColumn.contains("->") {
+            return nil
+        }
+
         // Parse port from patterns like "*:7000" or "[::1]:42050" or "127.0.0.1:8080"
         guard let port = extractPort(from: nameColumn) else {
-            logger.warning("Failed to extract port from: \(nameColumn)")
+            // Wildcard bindings like "*:*" are expected for some UDP sockets; not a parse failure worth warning about.
+            if !nameColumn.hasSuffix(":*") {
+                logger.warning("Failed to extract port from: \(nameColumn)")
+            }
             return nil
         }
 
         return PortInfo(
             port: port,
-            portProtocol: .tcp,
+            portProtocol: portProtocol,
             pid: pid,
             processName: command,
             appName: nil,

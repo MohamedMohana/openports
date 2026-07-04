@@ -5,6 +5,7 @@ struct PreferencesView: View {
     @AppStorage(AppSettingsKey.refreshInterval) private var refreshInterval = AppSettings.defaultRefreshInterval
     @AppStorage(AppSettingsKey.groupPorts) private var groupPorts = AppSettings.defaultGroupPorts
     @AppStorage(AppSettingsKey.showSystemProcesses) private var showSystemProcesses = AppSettings.defaultShowSystemProcesses
+    @AppStorage(AppSettingsKey.showUDPPorts) private var showUDPPorts = AppSettings.defaultShowUDPPorts
     @AppStorage(AppSettingsKey.groupByCategory) private var groupByCategory = AppSettings.defaultGroupByCategory
     @AppStorage(AppSettingsKey.groupByProcess) private var groupByProcess = AppSettings.defaultGroupByProcess
     @AppStorage(AppSettingsKey.killWarningLevel) private var killWarningLevel = AppSettings.defaultKillWarningLevel
@@ -78,6 +79,11 @@ struct PreferencesView: View {
                         postPreferenceChange(key: AppSettingsKey.showSystemProcesses)
                     }
 
+                Toggle("Show UDP ports", isOn: $showUDPPorts)
+                    .onChange(of: showUDPPorts) { _, _ in
+                        postPreferenceChange(key: AppSettingsKey.showUDPPorts)
+                    }
+
                 Toggle("Launch at login", isOn: $launchAtLoginEnabled)
                     .onChange(of: launchAtLoginEnabled) { _, isEnabled in
                         LaunchAtLoginManager.setEnabled(isEnabled)
@@ -85,7 +91,7 @@ struct PreferencesView: View {
             } header: {
                 Text("General")
             } footer: {
-                Text("Use Manual refresh for the lowest background activity.")
+                Text("Use Manual refresh for the lowest background activity. UDP sockets have no listening state, so enabling them shows every bound UDP endpoint.")
             }
 
             Section {
@@ -254,6 +260,7 @@ struct PreferencesView: View {
         refreshInterval = AppSettings.defaultRefreshInterval
         groupPorts = AppSettings.defaultGroupPorts
         showSystemProcesses = AppSettings.defaultShowSystemProcesses
+        showUDPPorts = AppSettings.defaultShowUDPPorts
         groupByCategory = AppSettings.defaultGroupByCategory
         groupByProcess = AppSettings.defaultGroupByProcess
         killWarningLevel = AppSettings.defaultKillWarningLevel

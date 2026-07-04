@@ -27,6 +27,7 @@ class MenuViewModel: ObservableObject {
     private struct ObservedSettings: Equatable {
         let refreshInterval: Double
         let showSystemProcesses: Bool
+        let showUDPPorts: Bool
         let groupByCategory: Bool
         let groupByProcess: Bool
     }
@@ -48,6 +49,10 @@ class MenuViewModel: ObservableObject {
         userDefaults.bool(forKey: AppSettingsKey.showSystemProcesses)
     }
 
+    private var showUDPPorts: Bool {
+        userDefaults.bool(forKey: AppSettingsKey.showUDPPorts)
+    }
+
     private var groupByCategory: Bool {
         userDefaults.bool(forKey: AppSettingsKey.groupByCategory)
     }
@@ -66,6 +71,7 @@ class MenuViewModel: ObservableObject {
     private var observedSettings = ObservedSettings(
         refreshInterval: AppSettings.defaultRefreshInterval,
         showSystemProcesses: AppSettings.defaultShowSystemProcesses,
+        showUDPPorts: AppSettings.defaultShowUDPPorts,
         groupByCategory: AppSettings.defaultGroupByCategory,
         groupByProcess: AppSettings.defaultGroupByProcess,
     )
@@ -149,6 +155,10 @@ class MenuViewModel: ObservableObject {
             configureRefreshTimer()
         }
 
+        if observedSettings.showUDPPorts != previousSettings.showUDPPorts {
+            refreshPorts()
+        }
+
         if menuAffectingPreferenceKeys.contains(key) {
             updateMenu()
         }
@@ -167,6 +177,10 @@ class MenuViewModel: ObservableObject {
             configureRefreshTimer()
         }
 
+        if currentSettings.showUDPPorts != previousSettings.showUDPPorts {
+            refreshPorts()
+        }
+
         let menuNeedsUpdate =
             currentSettings.showSystemProcesses != previousSettings.showSystemProcesses ||
             currentSettings.groupByCategory != previousSettings.groupByCategory ||
@@ -181,6 +195,7 @@ class MenuViewModel: ObservableObject {
         ObservedSettings(
             refreshInterval: refreshInterval,
             showSystemProcesses: showSystemProcesses,
+            showUDPPorts: showUDPPorts,
             groupByCategory: groupByCategory,
             groupByProcess: groupByProcess,
         )
@@ -214,10 +229,11 @@ class MenuViewModel: ObservableObject {
         isLoading = true
         lastError = nil
 
+        let includeUDP = showUDPPorts
         Task {
             let portInfoEnhancer = PortInfoEnhancer()
-            AppLogger.shared.log("Calling portScanner.scanOpenPorts()")
-            let result = await portScanner.scanOpenPorts()
+            AppLogger.shared.log("Calling portScanner.scanOpenPorts(includeUDP: \(includeUDP))")
+            let result = await portScanner.scanOpenPorts(includeUDP: includeUDP)
             AppLogger.shared.log("Port scanner result - success: \(result.success), ports count: \(result.ports.count)")
 
             if result.success {

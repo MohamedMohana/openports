@@ -1,0 +1,8 @@
+# SwiftFormat configuration — kept in agreement with .swiftlint.yml
+--swiftversion 6.1
+
+# SwiftLint's opening_brace rule requires the brace on the same line,
+# so don't wrap braces after multiline conditions.
+--disable wrapMultilineStatementBraces
+
+--exclude .build,DerivedData

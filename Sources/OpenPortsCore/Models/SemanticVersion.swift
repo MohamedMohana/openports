@@ -11,11 +11,10 @@ public struct SemanticVersion: Comparable, Equatable, CustomStringConvertible {
             return nil
         }
 
-        let withoutPrefix: String
-        if trimmed.hasPrefix("v") || trimmed.hasPrefix("V") {
-            withoutPrefix = String(trimmed.dropFirst())
+        let withoutPrefix: String = if trimmed.hasPrefix("v") || trimmed.hasPrefix("V") {
+            String(trimmed.dropFirst())
         } else {
-            withoutPrefix = trimmed
+            trimmed
         }
 
         let coreVersion = withoutPrefix.split(separator: "-", maxSplits: 1).first.map(String.init) ?? ""
