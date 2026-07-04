@@ -46,7 +46,7 @@ public actor PortInfoEnhancer {
     private func getProcessStartTime(pid: Int) async -> Date? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/ps")
-        process.arguments = ["-p", String(pid), "-o", "lstart=", "-o", "pid="]
+        process.arguments = ["-p", String(pid), "-o", "lstart="]
 
         let outputPipe = Pipe()
         let errorPipe = Pipe()
@@ -64,15 +64,28 @@ public actor PortInfoEnhancer {
                 return nil
             }
 
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            formatter.dateFormat = "EEE MMM dd HH:mm:ss yyyy"
-
-            let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
-            return formatter.date(from: trimmed)
+            return Self.parseProcessStartTime(output)
         } catch {
             logger.debug("Failed to get start time for PID \(pid): \(error.localizedDescription)")
             return nil
         }
+    }
+
+    /// Parse the output of `ps -o lstart=`, e.g. "Sat Jul  4 04:09:00 2026".
+    /// `ps` pads single-digit days with an extra space, so runs of spaces are
+    /// collapsed before parsing with a single-digit-tolerant day format.
+    static func parseProcessStartTime(_ output: String) -> Date? {
+        let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        let normalized = trimmed
+            .split(separator: " ", omittingEmptySubsequences: true)
+            .joined(separator: " ")
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "EEE MMM d HH:mm:ss yyyy"
+
+        return formatter.date(from: normalized)
     }
 }
