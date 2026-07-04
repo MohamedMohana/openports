@@ -19,31 +19,74 @@ struct PreferencesView: View {
     @AppStorage(AppSettingsKey.portSpikeThreshold) private var portSpikeThreshold = AppSettings.defaultPortSpikeThreshold
 
     @State private var launchAtLoginEnabled = false
+    @State private var selectedTab: SettingsTab = .general
     @ObservedObject private var appUpdateService = AppUpdateService.shared
+
+    private enum SettingsTab: String, CaseIterable {
+        case general = "General"
+        case display = "Display"
+        case notifications = "Notifications"
+        case updates = "Updates"
+        case about = "About"
+
+        var icon: String {
+            switch self {
+            case .general: "gearshape"
+            case .display: "list.bullet.rectangle"
+            case .notifications: "bell.badge"
+            case .updates: "arrow.triangle.2.circlepath"
+            case .about: "info.circle"
+            }
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
-            TabView {
-                generalTab
-                    .tabItem { Label("General", systemImage: "gearshape") }
-                displayTab
-                    .tabItem { Label("Display", systemImage: "list.bullet.rectangle") }
-                notificationsTab
-                    .tabItem { Label("Notifications", systemImage: "bell.badge") }
-                updatesTab
-                    .tabItem { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
-                aboutTab
-                    .tabItem { Label("About", systemImage: "info.circle") }
+            tabBar
+            Divider()
+
+            Group {
+                switch selectedTab {
+                case .general:
+                    generalTab
+                case .display:
+                    displayTab
+                case .notifications:
+                    notificationsTab
+                case .updates:
+                    updatesTab
+                case .about:
+                    aboutTab
+                }
             }
-            .padding(.top, 6)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             Divider()
             footer
         }
-        .frame(width: 560, height: 500)
+        .frame(width: 560, height: 520)
         .onAppear {
             launchAtLoginEnabled = LaunchAtLoginManager.isEnabled
         }
+    }
+
+    /// Classic macOS preferences toolbar: icon-over-label buttons, selected
+    /// tab tinted and highlighted. Built by hand so it never collapses into
+    /// an overflow menu the way a segmented TabView can.
+    private var tabBar: some View {
+        HStack(spacing: 4) {
+            ForEach(SettingsTab.allCases, id: \.self) { tab in
+                TabBarButton(
+                    title: tab.rawValue,
+                    icon: tab.icon,
+                    isSelected: selectedTab == tab,
+                ) {
+                    selectedTab = tab
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
     }
 
     // MARK: General
@@ -498,6 +541,45 @@ struct PreferencesView: View {
 
     private func closeWindow() {
         NSApp.keyWindow?.close()
+    }
+}
+
+/// Toolbar-style tab button: icon over label, tinted when selected.
+private struct TabBarButton: View {
+    let title: String
+    let icon: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 17, weight: .regular))
+                Text(title)
+                    .font(.system(size: 11))
+            }
+            .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
+            .frame(width: 76, height: 52)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(backgroundColor),
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+    }
+
+    private var backgroundColor: Color {
+        if isSelected {
+            return Color.primary.opacity(0.09)
+        }
+        return isHovered ? Color.primary.opacity(0.05) : .clear
     }
 }
 

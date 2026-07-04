@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No unreleased changes yet.
 
+## [2.5.1] - 2026-07-04
+
+### Fixed
+- Settings tabs no longer collapse into an overflow dropdown menu: replaced the segmented TabView with a classic preferences toolbar (icon over label, selected tab highlighted)
+
 ## [2.5.0] - 2026-07-04
 
 ### Added
