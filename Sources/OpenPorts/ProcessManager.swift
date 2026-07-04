@@ -75,19 +75,15 @@ final class ProcessManager {
 
         if let bundleID = port.bundleID {
             let systemPrefixes = ["com.apple.", "com.apple.coreservices"]
-            for prefix in systemPrefixes {
-                if bundleID.hasPrefix(prefix) {
-                    return true
-                }
+            if systemPrefixes.contains(where: { bundleID.hasPrefix($0) }) {
+                return true
             }
         }
 
         if let path = port.executablePath {
             let systemPaths = ["/System/", "/usr/sbin/", "/usr/bin/"]
-            for systemPath in systemPaths {
-                if path.hasPrefix(systemPath) {
-                    return true
-                }
+            if systemPaths.contains(where: { path.hasPrefix($0) }) {
+                return true
             }
         }
 
