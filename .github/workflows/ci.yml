@@ -59,29 +59,20 @@ jobs:
       - name: Build Release
         run: swift build -c release --arch arm64
 
-      - name: CLI Smoke Debug (temporary)
-        run: |
-          which python3 || true
-          python3 --version || true
-          python3 -m http.server 39471 > server.log 2>&1 &
-          LISTENER_PID=$!
-          sleep 3
-          echo "--- server.log:"; cat server.log || true
-          echo "--- ps:"; ps aux | grep -i "http.server" | grep -v grep || true
-          echo "--- kill -0:"; kill -0 "$LISTENER_PID" && echo alive || echo dead
-          echo "--- nc probe:"; nc -z 127.0.0.1 39471 && echo "port open" || echo "port closed"
-          echo "--- lsof TCP LISTEN:"; /usr/sbin/lsof -nP -iTCP -sTCP:LISTEN || echo "lsof exit=$?"
-          echo "--- lsof this pid:"; /usr/sbin/lsof -nP -a -p "$LISTENER_PID" -iTCP || echo "lsof exit=$?"
-          echo "--- sudo lsof TCP LISTEN:"; sudo /usr/sbin/lsof -nP -iTCP -sTCP:LISTEN | head -20 || echo "sudo lsof exit=$?"
-          kill "$LISTENER_PID" || true
-
       - name: CLI Smoke Test
         run: |
           BIN_PATH="$(swift build -c release --arch arm64 --show-bin-path)"
           # Runners can have zero listening sockets, so provide one.
           python3 -m http.server 39471 &
           LISTENER_PID=$!
-          sleep 2
+          # Python can take many seconds to bind on a cold runner; wait until
+          # the listener is visible to lsof before asserting on CLI output.
+          for _ in $(seq 1 60); do
+            if /usr/sbin/lsof -nP -iTCP -sTCP:LISTEN | grep -q ":39471 "; then
+              break
+            fi
+            sleep 2
+          done
           "${BIN_PATH}/openports-cli" --version
           "${BIN_PATH}/openports-cli" --format table
           "${BIN_PATH}/openports-cli" --format table | grep -q 39471
