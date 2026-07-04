@@ -9,10 +9,15 @@ let package = Package(
         .executable(
             name: "OpenPorts",
             targets: ["OpenPorts"]
+        ),
+        .executable(
+            name: "openports-cli",
+            targets: ["OpenPortsCLI"]
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.6.0")
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.6.0"),
+        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0")
     ],
     targets: [
         .target(
@@ -27,9 +32,21 @@ let package = Package(
                 "OpenPortsCore"
             ]
         ),
+        .executableTarget(
+            name: "OpenPortsCLI",
+            dependencies: [
+                "OpenPortsCore",
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                .product(name: "Logging", package: "swift-log")
+            ]
+        ),
         .testTarget(
             name: "OpenPortsCoreTests",
             dependencies: ["OpenPortsCore"]
+        ),
+        .testTarget(
+            name: "OpenPortsCLITests",
+            dependencies: ["OpenPortsCLI"]
         )
     ]
 )

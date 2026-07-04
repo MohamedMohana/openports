@@ -78,8 +78,15 @@ public actor PortScanner {
         }
 
         if process.terminationStatus != 0 {
-            logger.error("lsof failed with status \(process.terminationStatus)")
-            throw PortScannerError.commandFailed(status: process.terminationStatus)
+            // lsof exits 1 both for real errors and when nothing matches the
+            // selection; treat exit 1 with no output as an empty result.
+            let isEmptySelection = process.terminationStatus == 1
+                && output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            guard isEmptySelection else {
+                logger.error("lsof failed with status \(process.terminationStatus)")
+                throw PortScannerError.commandFailed(status: process.terminationStatus)
+            }
+            logger.info("lsof matched no sockets for \(arguments.joined(separator: " "))")
         }
 
         logger.debug("lsof output: \(output.count) characters")

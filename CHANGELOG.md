@@ -12,6 +12,7 @@ No unreleased changes yet.
 ## [2.2.0] - 2026-07-04
 
 ### Added
+- `openports-cli`, a terminal companion installed by the Homebrew cask: lists listening TCP (and optionally UDP) ports as a table, JSON, or CSV, and terminates by port number (`--kill`) with the same safety warnings as the app
 - Optional UDP port view: enable "Show UDP ports" in Preferences to list bound UDP sockets alongside listening TCP ports
 - Architecture guide (`docs/ARCHITECTURE.md`) covering targets, data flow, and the release pipeline
 - `.swiftformat` and `.editorconfig` configuration so local formatting matches CI and stays in agreement with SwiftLint

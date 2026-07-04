@@ -44,9 +44,15 @@ jobs:
           chmod +x Scripts/package_app.sh
           ./Scripts/package_app.sh release "${{ matrix.package_arch }}"
 
+      - name: Stage CLI Binary
+        run: |
+          BIN_PATH="$(swift build -c release --arch "${{ matrix.swift_arch }}" --show-bin-path)"
+          cp "${BIN_PATH}/openports-cli" openports-cli
+          codesign --force --sign - openports-cli
+
       - name: Archive App
         run: |
-          zip -r "OpenPorts-${{ steps.version.outputs.tag }}-${{ matrix.package_arch }}.zip" OpenPorts.app
+          zip -r "OpenPorts-${{ steps.version.outputs.tag }}-${{ matrix.package_arch }}.zip" OpenPorts.app openports-cli
           shasum -a 256 "OpenPorts-${{ steps.version.outputs.tag }}-${{ matrix.package_arch }}.zip" > "OpenPorts-${{ steps.version.outputs.tag }}-${{ matrix.package_arch }}.sha256"
 
       - name: Upload Artifacts

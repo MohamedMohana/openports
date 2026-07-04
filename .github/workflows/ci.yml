@@ -59,6 +59,25 @@ jobs:
       - name: Build Release
         run: swift build -c release --arch arm64
 
+      - name: CLI Smoke Test
+        run: |
+          BIN_PATH="$(swift build -c release --arch arm64 --show-bin-path)"
+          # Runners can have zero listening sockets, so provide one.
+          python3 -m http.server 39471 &
+          LISTENER_PID=$!
+          sleep 2
+          "${BIN_PATH}/openports-cli" --version
+          "${BIN_PATH}/openports-cli" --format table
+          "${BIN_PATH}/openports-cli" --format table | grep -q 39471
+          "${BIN_PATH}/openports-cli" --format json > /dev/null
+          "${BIN_PATH}/openports-cli" --format csv > /dev/null
+          "${BIN_PATH}/openports-cli" --kill 39471 --force
+          sleep 1
+          if kill -0 "${LISTENER_PID}" 2>/dev/null; then
+            echo "::error::openports-cli --kill did not terminate the listener"
+            exit 1
+          fi
+
       - name: Package App
         run: |
           chmod +x Scripts/package_app.sh
