@@ -314,6 +314,7 @@ class MenuViewModel: ObservableObject {
         AppLogger.shared.log("Updating menu with \(ports.count) ports, error: \(lastError ?? "none")")
 
         statusItemController.updateStatusIcon(ports: ports, hasWarnings: lastError != nil)
+        statusItemController.updateState(portCount: ports.count, isLoading: isLoading, lastUpdatedAt: lastUpdatedAt)
 
         let favorites = FavoritesManager.shared.favorites
         let descriptor = MenuDescriptor().build(
@@ -355,5 +356,6 @@ class MenuViewModel: ObservableObject {
             lastUpdatedAt: nil,
         )
         statusItemController.updateMenu(descriptor)
+        statusItemController.updateState(portCount: 0, isLoading: true, lastUpdatedAt: nil)
     }
 }

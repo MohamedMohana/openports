@@ -56,104 +56,80 @@ struct MenuDescriptor {
         isLoading: Bool = false,
         groupByCategory: Bool = false,
         groupByProcess: Bool = false,
-        lastUpdatedAt: Date? = nil,
+        lastUpdatedAt _: Date? = nil,
         favoritePorts: Set<Int> = [],
     ) -> MenuDescriptor {
         var entries = [MenuEntry]()
-        let categorizer = PortCategorizer()
 
-        entries.append(.refreshButton)
-
+        // Loading, scan freshness, and empty states are rendered by the popover
+        // itself from its summary state; the descriptor only carries content rows.
         if isLoading {
-            entries.append(.text("Loading...", style: .secondary))
-        } else if let error = errorMessage {
-            entries.append(.text("Error: \(error)", style: .warning))
-        } else {
-            let statusText: String = if searchText.isEmpty {
-                formattedLastUpdatedText(from: lastUpdatedAt)
-            } else {
-                "Filtering: \(searchText)"
-            }
-            entries.append(.text(statusText, style: .secondary))
+            return MenuDescriptor(sections: [MenuSection(entries: entries)])
         }
 
-        entries.append(.divider)
+        if let error = errorMessage {
+            entries.append(.text(error, style: .warning))
+            entries.append(.text("If scans keep failing, check System Settings › Privacy & Security.", style: .secondary))
+            return MenuDescriptor(sections: [MenuSection(entries: entries)])
+        }
 
+        let categorizer = PortCategorizer()
         let filteredPorts = filterPorts(ports, searchText: searchText, showSystemProcesses: showSystemProcesses)
 
-        if !isLoading {
-            if let error = errorMessage {
-                entries.append(.text("⚠️ \(error)", style: .warning))
-                entries.append(.text("Check System Settings > Privacy & Security", style: .secondary))
-            } else if filteredPorts.isEmpty {
-                entries.append(.text("No open ports found", style: .secondary))
-            } else {
-                let favoritePortsList = filteredPorts.filter { favoritePorts.contains($0.port) }
-                let nonFavoritePorts = filteredPorts.filter { !favoritePorts.contains($0.port) }
+        let favoritePortsList = filteredPorts.filter { favoritePorts.contains($0.port) }
+        let nonFavoritePorts = filteredPorts.filter { !favoritePorts.contains($0.port) }
 
-                if !favoritePortsList.isEmpty {
-                    entries.append(.text("★ FAVORITES (\(favoritePortsList.count))", style: .header))
-                    entries.append(.divider)
+        if !favoritePortsList.isEmpty {
+            entries.append(.text("Favorites", style: .header))
 
-                    for port in favoritePortsList.sorted(by: { $0.port < $1.port }) {
-                        let categorized = categorizer.categorize(port)
-                        entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
-                    }
+            for port in favoritePortsList.sorted(by: { $0.port < $1.port }) {
+                entries.append(portRowEntry(for: port, categorizer: categorizer))
+            }
+        }
 
-                    if !nonFavoritePorts.isEmpty {
-                        entries.append(.divider)
+        if !nonFavoritePorts.isEmpty {
+            if groupByProcess {
+                let groupedPorts = categorizer.groupByProcess(nonFavoritePorts)
+
+                for processName in groupedPorts.keys.sorted(by: <) {
+                    guard let portsInProcess = groupedPorts[processName] else { continue }
+                    entries.append(.text(processName, style: .header))
+
+                    for port in portsInProcess.sorted(by: { $0.port < $1.port }) {
+                        entries.append(portRowEntry(for: port, categorizer: categorizer))
                     }
                 }
+            } else if groupByCategory {
+                let groupedPorts = categorizer.groupByCategory(nonFavoritePorts)
 
-                if !nonFavoritePorts.isEmpty {
-                    entries.append(.text("\(nonFavoritePorts.count) open port(s)", style: .header))
-                    entries.append(.divider)
+                for category in groupedPorts.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+                    guard let portsInCategory = groupedPorts[category] else { continue }
+                    entries.append(.text(category.rawValue, style: .header))
 
-                    if groupByProcess {
-                        let groupedPorts = categorizer.groupByProcess(nonFavoritePorts)
-                        let sortedProcesses = groupedPorts.keys.sorted { $0 < $1 }
-
-                        for processName in sortedProcesses {
-                            if let portsInProcess = groupedPorts[processName] {
-                                entries.append(.text(processName, style: .header))
-                                entries.append(.divider)
-
-                                for port in portsInProcess.sorted(by: { $0.port < $1.port }) {
-                                    let categorized = categorizer.categorize(port)
-                                    entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
-                                }
-                            }
-                        }
-                    } else if groupByCategory {
-                        let groupedPorts = categorizer.groupByCategory(nonFavoritePorts)
-                        let sortedCategories = groupedPorts.keys.sorted { $0.rawValue < $1.rawValue }
-
-                        for category in sortedCategories {
-                            if let portsInCategory = groupedPorts[category] {
-                                entries.append(.text("\(category.icon) \(category.rawValue) - \(portsInCategory.count)", style: .header))
-                                entries.append(.divider)
-
-                                for port in portsInCategory {
-                                    let categorized = categorizer.categorize(port)
-                                    entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
-                                }
-                            }
-                        }
-                    } else {
-                        for port in nonFavoritePorts {
-                            let categorized = categorizer.categorize(port)
-                            entries.append(.portRow(port, category: categorized.category, technology: categorized.technology, projectName: categorized.projectName))
-                        }
+                    for port in portsInCategory {
+                        entries.append(portRowEntry(for: port, categorizer: categorizer))
                     }
+                }
+            } else {
+                entries.append(.text(favoritePortsList.isEmpty ? "Ports" : "Other Ports", style: .header))
+
+                for port in nonFavoritePorts {
+                    entries.append(portRowEntry(for: port, categorizer: categorizer))
                 }
             }
         }
 
-        entries.append(.divider)
-        entries.append(.viewLogsButton)
-        entries.append(.preferencesButton)
-
         return MenuDescriptor(sections: [MenuSection(entries: entries)])
+    }
+
+    private func portRowEntry(for port: PortInfo, categorizer: PortCategorizer) -> MenuEntry {
+        let categorized = categorizer.categorize(port)
+        return .portRow(
+            port,
+            category: categorized.category,
+            technology: categorized.technology,
+            projectName: categorized.projectName,
+        )
     }
 
     /// Filter ports based on search text and system process setting.
@@ -185,20 +161,5 @@ struct MenuDescriptor {
 
             return searchIn.contains { $0.contains(lowerSearchText) }
         }
-    }
-
-    private func formattedLastUpdatedText(from date: Date?) -> String {
-        guard let date else {
-            return "Ready"
-        }
-
-        if Date().timeIntervalSince(date) < 1 {
-            return "Updated just now"
-        }
-
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .short
-        let relative = formatter.localizedString(for: date, relativeTo: Date())
-        return "Updated \(relative)"
     }
 }
