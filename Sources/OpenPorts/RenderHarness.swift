@@ -30,7 +30,7 @@ enum RenderHarness {
         for scheme in [("light", NSAppearance.Name.aqua), ("dark", NSAppearance.Name.darkAqua)] {
             snapshot(
                 view: AnyView(PreferencesView().background(Color(nsColor: .windowBackgroundColor))),
-                size: NSSize(width: 560, height: 500),
+                size: NSSize(width: 560, height: 520),
                 appearance: scheme.1,
                 to: "\(directory)/preferences-\(scheme.0).png",
             )
