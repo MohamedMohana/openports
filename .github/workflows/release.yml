@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Swift Version
         run: swift --version
@@ -56,7 +56,7 @@ jobs:
           shasum -a 256 "OpenPorts-${{ steps.version.outputs.tag }}-${{ matrix.package_arch }}.zip" > "OpenPorts-${{ steps.version.outputs.tag }}-${{ matrix.package_arch }}.sha256"
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: OpenPorts-${{ matrix.package_arch }}
           path: |
@@ -79,13 +79,13 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Download ARM64 Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: OpenPorts-arm64
           path: artifacts
 
       - name: Download Intel Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: OpenPorts-intel
           path: artifacts
@@ -100,7 +100,7 @@ jobs:
           cat artifacts/*.sha256
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: OpenPorts v${{ steps.version.outputs.version }}
           generate_release_notes: true
@@ -134,11 +134,11 @@ jobs:
 
       - name: Checkout OpenPorts Repo
         if: env.HAS_TAP_KEY == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Download Artifacts
         if: env.HAS_TAP_KEY == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: OpenPorts-*
           path: artifacts
@@ -155,7 +155,7 @@ jobs:
 
       - name: Checkout Tap Repo
         if: env.HAS_TAP_KEY == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: MohamedMohana/homebrew-tap
           ssh-key: ${{ secrets.HOMEBREW_TAP_SSH_KEY }}
